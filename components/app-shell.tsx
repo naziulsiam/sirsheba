@@ -1,6 +1,7 @@
 'use client'
 
 import { BottomNav } from './bottom-nav'
+import { OfflineIndicator } from './offline-indicator'
 import { GraduationCap, CheckCircle2, Wifi, WifiOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -73,6 +74,9 @@ export function AppShell({ children, title }: AppShellProps) {
       <main className="mx-auto max-w-md">
         {children}
       </main>
+
+      {/* Offline Queue Indicator */}
+      <OfflineIndicator />
 
       {/* Bottom Navigation */}
       <BottomNav />

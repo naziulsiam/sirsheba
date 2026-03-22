@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { useSettings, useStudents, useBatches, useFeePayments, useAttendance, useExams, useExamResults, useSMSLogs } from '@/hooks/use-store'
+import { useSettings, useStudents, useBatches, useFeePayments, useAttendance, useExams, useExamResults, useSMSLogs, useAuth } from '@/hooks/use-store'
 import {
   Settings,
   User,
@@ -19,10 +19,15 @@ import {
   Check,
   Trash2,
   Info,
+  Bell,
+  Calendar,
+  Clock,
+  FileBarChart,
 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 
 export default function SettingsPage() {
-  const { settings, updateSettings, isHydrated } = useSettings()
+  const { settings, updateSettings, updateReminders, isHydrated } = useSettings()
   const { students } = useStudents()
   const { batches } = useBatches()
   const { payments } = useFeePayments()
@@ -30,6 +35,7 @@ export default function SettingsPage() {
   const { exams } = useExams()
   const { results } = useExamResults()
   const { logs } = useSMSLogs()
+  const { logout } = useAuth()
 
   const [formData, setFormData] = useState({
     name: settings.name,
@@ -37,6 +43,13 @@ export default function SettingsPage() {
     phone: settings.phone,
   })
   const [showSaved, setShowSaved] = useState(false)
+
+  const reminders = settings.reminders || {
+    feeReminderDay: 5,
+    absenceAlert: true,
+    dailySummary: true,
+    monthlyReport: true,
+  }
 
   if (!isHydrated) {
     return (
@@ -184,6 +197,86 @@ export default function SettingsPage() {
           </Card>
         </form>
 
+        {/* Smart Reminders */}
+        <Card className="p-4">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-warning/10">
+              <Bell className="h-5 w-5 text-warning" />
+            </div>
+            <div>
+              <h2 className="font-semibold">স্মার্ট রিমাইন্ডার</h2>
+              <p className="text-xs text-muted-foreground">স্বয়ংক্রিয় SMS নোটিফিকেশন</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {/* Fee Reminder Day */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">ফি স্মরণ দিন</p>
+                  <p className="text-xs text-muted-foreground">প্রতি মাসের কত তারিখে</p>
+                </div>
+              </div>
+              <select
+                value={reminders.feeReminderDay}
+                onChange={(e) => updateReminders({ feeReminderDay: parseInt(e.target.value) })}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                {[1, 3, 5, 7, 10, 15].map(day => (
+                  <option key={day} value={day}>{day}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Absence Alert */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">অনুপস্থিতি অ্যালার্ট</p>
+                  <p className="text-xs text-muted-foreground">অনুপস্থিত মার্ক করলে SMS</p>
+                </div>
+              </div>
+              <Switch
+                checked={reminders.absenceAlert}
+                onCheckedChange={(checked) => updateReminders({ absenceAlert: checked })}
+              />
+            </div>
+
+            {/* Daily Summary */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">দৈনিক সারাংশ</p>
+                  <p className="text-xs text-muted-foreground">রাত ৮টায় দৈনিক রিপোর্ট</p>
+                </div>
+              </div>
+              <Switch
+                checked={reminders.dailySummary}
+                onCheckedChange={(checked) => updateReminders({ dailySummary: checked })}
+              />
+            </div>
+
+            {/* Monthly Report */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileBarChart className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">মাসিক রিপোর্ট</p>
+                  <p className="text-xs text-muted-foreground">প্রতি মাসের ১ তারিখে</p>
+                </div>
+              </div>
+              <Switch
+                checked={reminders.monthlyReport}
+                onCheckedChange={(checked) => updateReminders({ monthlyReport: checked })}
+              />
+            </div>
+          </div>
+        </Card>
+
         {/* Management Links */}
         <Card className="overflow-hidden p-0">
           <div className="px-4 py-3 text-sm font-semibold text-muted-foreground">
@@ -275,6 +368,15 @@ export default function SettingsPage() {
             সতর্কতা: এই কাজ পূর্বাবস্থায় ফেরানো যাবে না
           </p>
         </Card>
+
+        {/* Logout */}
+        <Button
+          variant="outline"
+          onClick={logout}
+          className="w-full h-11"
+        >
+          লগআউট
+        </Button>
       </div>
     </AppShell>
   )

@@ -10,8 +10,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useStudents, useBatches, useFeePayments, useSMSLogs, useSettings } from '@/hooks/use-store'
 import { formatTaka, toBanglaNumber, BANGLA_MONTHS } from '@/lib/types'
 import { fillTemplate, SMS_TEMPLATES } from '@/lib/sms-templates'
-import { ArrowLeft, Search, Check, X, MessageSquare } from 'lucide-react'
+import { ArrowLeft, Search, Check, X, MessageSquare, Mic } from 'lucide-react'
 import Link from 'next/link'
+import { VoiceInputButton } from '@/components/voice-input-button'
 
 function QuickCashContent() {
   const searchParams = useSearchParams()
@@ -167,9 +168,15 @@ function QuickCashContent() {
               placeholder="নাম বা ফোন দিয়ে খুঁজুন..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
+              className="pl-9 pr-12"
               autoFocus
             />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <VoiceInputButton 
+                onResult={(text) => setSearch(text)}
+                language="bn-BD"
+              />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -291,6 +298,17 @@ function QuickCashContent() {
 
   // Step 3: Confirm
   if (step === 'confirm' && student) {
+    // Generate SMS preview
+    const template = SMS_TEMPLATES.find(t => t.id === 'fee-receipt')
+    const smsPreview = template && sendSMS
+      ? fillTemplate(template.contentBn, {
+          StudentName: student.nameBn,
+          Month: BANGLA_MONTHS[currentMonth - 1],
+          Amount: toBanglaNumber(parseInt(amount)),
+          TutorName: settings.nameBn,
+        })
+      : ''
+
     return (
       <AppShell title="নিশ্চিত করুন">
         <div className="p-4">
@@ -340,6 +358,17 @@ function QuickCashContent() {
               </div>
             </button>
           </Card>
+
+          {/* SMS Preview */}
+          {sendSMS && smsPreview && (
+            <Card className="p-4 mb-4 bg-chart-5/5 border-chart-5/20">
+              <p className="text-xs text-chart-5 font-medium mb-2">SMS প্রিভিউ:</p>
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">{smsPreview}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                প্রাপক: {student.fatherPhone}
+              </p>
+            </Card>
+          )}
 
           <div className="flex gap-3">
             <Button

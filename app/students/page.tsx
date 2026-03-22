@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { useStudents, useBatches, useFeePayments } from '@/hooks/use-store'
 import { formatTaka, toBanglaNumber } from '@/lib/types'
 import { Search, Plus, Phone, MessageSquare, ChevronRight, Users } from 'lucide-react'
+import { VoiceInputButton } from '@/components/voice-input-button'
 
 export default function StudentsPage() {
   const [search, setSearch] = useState('')
@@ -75,8 +76,14 @@ export default function StudentsPage() {
             placeholder="নাম বা ফোন দিয়ে খুঁজুন..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
+            className="pl-9 pr-12"
           />
+          <div className="absolute right-2 top-1/2 -translate-y-1/2">
+            <VoiceInputButton 
+              onResult={(text) => setSearch(text)}
+              language="bn-BD"
+            />
+          </div>
         </div>
 
         {/* Batch Filter */}

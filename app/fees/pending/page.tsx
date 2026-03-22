@@ -1,20 +1,26 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { AppShell } from '@/components/app-shell'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { useStudents, useBatches, useFeePayments } from '@/hooks/use-store'
-import { formatTaka, toBanglaNumber } from '@/lib/types'
-import { ArrowLeft, AlertTriangle, Phone, MessageSquare, Banknote, Bell } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useStudents, useBatches, useFeePayments, useAttendance } from '@/hooks/use-store'
+import { formatTaka, toBanglaNumber, BANGLA_MONTHS } from '@/lib/types'
+import { ArrowLeft, AlertTriangle, Phone, MessageSquare, Banknote, Bell, UserCheck, UserX, Calendar, ChevronRight, Clock } from 'lucide-react'
 
 export default function PendingFeesPage() {
   const { students, isHydrated: studentsHydrated } = useStudents()
   const { getBatch, isHydrated: batchesHydrated } = useBatches()
-  const { payments, isHydrated: paymentsHydrated } = useFeePayments()
+  const { payments, isHydrated: paymentsHydrated, getStudentPayments } = useFeePayments()
+  const { getStudentAttendance, isHydrated: attendanceHydrated } = useAttendance()
 
-  const isHydrated = studentsHydrated && batchesHydrated && paymentsHydrated
+  const [selectedStudent, setSelectedStudent] = useState<typeof pendingStudents[0] | null>(null)
+  const [showHistory, setShowHistory] = useState(false)
+
+  const isHydrated = studentsHydrated && batchesHydrated && paymentsHydrated && attendanceHydrated
 
   if (!isHydrated) {
     return (
@@ -65,6 +71,11 @@ export default function PendingFeesPage() {
 
   const totalPending = pendingStudents.reduce((sum, s) => sum + s.pending, 0)
 
+  const handleShowHistory = (student: typeof pendingStudents[0]) => {
+    setSelectedStudent(student)
+    setShowHistory(true)
+  }
+
   return (
     <AppShell title="বকেয়া ফি">
       <div className="p-4">
@@ -101,42 +112,48 @@ export default function PendingFeesPage() {
         <div className="space-y-2">
           {pendingStudents.map((student) => (
             <Card key={student.id} className="p-3">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-12 w-12">
-                  <AvatarFallback className="bg-destructive/10 text-destructive font-semibold">
-                    {student.nameBn.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold truncate">{student.nameBn}</p>
-                    {student.daysSincePayment > 30 && (
-                      <span className="inline-flex items-center rounded bg-destructive px-1.5 py-0.5 text-[10px] font-medium text-destructive-foreground">
-                        {toBanglaNumber(student.daysSincePayment)} দিন
+              <button
+                onClick={() => handleShowHistory(student)}
+                className="w-full text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarFallback className="bg-destructive/10 text-destructive font-semibold">
+                      {student.nameBn.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold truncate">{student.nameBn}</p>
+                      {student.daysSincePayment > 30 && (
+                        <span className="inline-flex items-center rounded bg-destructive px-1.5 py-0.5 text-[10px] font-medium text-destructive-foreground">
+                          {toBanglaNumber(student.daysSincePayment)} দিন
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {student.batch?.name || 'ব্যাচ নেই'}
+                    </p>
+                    <div className="mt-1 flex items-center gap-3 text-xs">
+                      <span className="text-muted-foreground">
+                        ফি: {formatTaka(student.monthlyFee)}
                       </span>
-                    )}
+                      {student.paidAmount > 0 && (
+                        <span className="text-primary">
+                          পেয়েছি: {formatTaka(student.paidAmount)}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {student.batch?.name || 'ব্যাচ নেই'}
-                  </p>
-                  <div className="mt-1 flex items-center gap-3 text-xs">
-                    <span className="text-muted-foreground">
-                      ফি: {formatTaka(student.monthlyFee)}
-                    </span>
-                    {student.paidAmount > 0 && (
-                      <span className="text-primary">
-                        পেয়েছি: {formatTaka(student.paidAmount)}
-                      </span>
-                    )}
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-destructive">
+                      {formatTaka(student.pending)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">বকেয়া</p>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto" />
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-destructive">
-                    {formatTaka(student.pending)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">বকেয়া</p>
-                </div>
-              </div>
+              </button>
 
               {/* Actions */}
               <div className="mt-3 flex gap-2">
@@ -174,6 +191,149 @@ export default function PendingFeesPage() {
             </p>
           </div>
         )}
+
+        {/* Student History Dialog */}
+        <Dialog open={showHistory} onOpenChange={setShowHistory}>
+          <DialogContent className="max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-center">
+                {selectedStudent?.nameBn}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedStudent && (
+              <div className="space-y-4">
+                {/* Profile Summary */}
+                <Card className="p-4 bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                        {selectedStudent.nameBn.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium">{selectedStudent.batch?.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        ফোন: {selectedStudent.fatherPhone}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Fee Summary */}
+                <Card className="p-4 border-destructive/30 bg-destructive/5">
+                  <h4 className="text-sm font-semibold mb-2">বকেয়া সারাংশ</h4>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p className="text-xs text-muted-foreground">মাসিক ফি</p>
+                      <p className="font-semibold">{formatTaka(selectedStudent.monthlyFee)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">পরিশোধিত</p>
+                      <p className="font-semibold text-primary">{formatTaka(selectedStudent.paidAmount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">বকেয়া</p>
+                      <p className="font-semibold text-destructive">{formatTaka(selectedStudent.pending)}</p>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Payment History */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    ফি ইতিহাস
+                  </h4>
+                  {(() => {
+                    const studentPayments = getStudentPayments(selectedStudent.id)
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    return studentPayments.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">
+                        কোনো ফি রেকর্ড নেই
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {studentPayments.slice(0, 5).map((payment) => (
+                          <Card key={payment.id} className="p-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                  <p className="text-sm font-medium">
+                                    {BANGLA_MONTHS[payment.month - 1]} {toBanglaNumber(payment.year)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(payment.date).toLocaleDateString('bn-BD')}
+                                  </p>
+                                </div>
+                              </div>
+                              <p className="font-semibold text-primary">{formatTaka(payment.amount)}</p>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                {/* Attendance Stats */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <UserCheck className="h-4 w-4" />
+                    এই মাসের উপস্থিতি
+                  </h4>
+                  {(() => {
+                    const attendance = getStudentAttendance(selectedStudent.id)
+                    const thisMonthAttendance = attendance.filter(a => {
+                      const date = new Date(a.date)
+                      return date.getMonth() + 1 === currentMonth && date.getFullYear() === currentYear
+                    })
+                    const presentCount = thisMonthAttendance.filter(a => a.status === 'present').length
+                    const absentCount = thisMonthAttendance.filter(a => a.status === 'absent').length
+                    return (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Card className="p-3 bg-primary/10 text-center">
+                          <UserCheck className="mx-auto h-4 w-4 text-primary mb-1" />
+                          <p className="text-lg font-bold text-primary">{toBanglaNumber(presentCount)}</p>
+                          <p className="text-xs text-muted-foreground">উপস্থিত</p>
+                        </Card>
+                        <Card className="p-3 bg-destructive/10 text-center">
+                          <UserX className="mx-auto h-4 w-4 text-destructive mb-1" />
+                          <p className="text-lg font-bold text-destructive">{toBanglaNumber(absentCount)}</p>
+                          <p className="text-xs text-muted-foreground">অনুপস্থিত</p>
+                        </Card>
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Link 
+                    href={`/fees/quick?student=${selectedStudent.id}`}
+                    className="flex-1"
+                    onClick={() => setShowHistory(false)}
+                  >
+                    <Button className="w-full">
+                      <Banknote className="mr-2 h-4 w-4" />
+                      ফি নিন
+                    </Button>
+                  </Link>
+                  <Link 
+                    href={`/sms?student=${selectedStudent.id}&template=fee-reminder`}
+                    className="flex-1"
+                    onClick={() => setShowHistory(false)}
+                  >
+                    <Button variant="destructive" className="w-full">
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      স্মরণ পাঠান
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppShell>
   )

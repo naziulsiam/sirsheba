@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useStudents, useBatches, useFeePayments, useSMSLogs, useSettings } from '@/hooks/use-store'
+import { useStudents, useBatches, useFeePayments, useSMSLogs, useSettings, useAttendance } from '@/hooks/use-store'
 import { formatTaka, toBanglaNumber, BANGLA_MONTHS } from '@/lib/types'
 import { SMS_TEMPLATES, fillTemplate, getSMSCount } from '@/lib/sms-templates'
 import { 
@@ -22,11 +22,13 @@ function SMSContent() {
   const preselectedStudent = searchParams.get('student')
   const preselectedTemplate = searchParams.get('template')
   const isBulk = searchParams.get('bulk') === 'true'
+  const absentDate = searchParams.get('absentDate')
 
   const { students, isHydrated: studentsHydrated } = useStudents()
   const { getBatch, isHydrated: batchesHydrated } = useBatches()
   const { payments, isHydrated: paymentsHydrated } = useFeePayments()
   const { addLog, logs, isHydrated: logsHydrated } = useSMSLogs()
+  const { attendance, isHydrated: attendanceHydrated } = useAttendance()
   const { settings } = useSettings()
 
   const [step, setStep] = useState<'template' | 'recipients' | 'compose' | 'sent'>('template')
@@ -37,7 +39,7 @@ function SMSContent() {
   const [message, setMessage] = useState('')
   const [sentCount, setSentCount] = useState(0)
 
-  const isHydrated = studentsHydrated && batchesHydrated && paymentsHydrated && logsHydrated
+  const isHydrated = studentsHydrated && batchesHydrated && paymentsHydrated && logsHydrated && attendanceHydrated
 
   useEffect(() => {
     if (preselectedStudent && preselectedTemplate && isHydrated) {
@@ -60,8 +62,20 @@ function SMSContent() {
         setSelectedStudents(defaulters)
         setStep('recipients')
       }
+    } else if (preselectedTemplate && absentDate && isHydrated) {
+      // Auto-select absent students for absence alert
+      if (preselectedTemplate === 'absence-alert') {
+        const absentStudents = attendance
+          .filter(a => a.date === absentDate && a.status === 'absent')
+          .map(a => a.studentId)
+        setSelectedStudents(absentStudents)
+        setStep('compose')
+        if (absentStudents.length > 0) {
+          generateMessage(preselectedTemplate, absentStudents)
+        }
+      }
     }
-  }, [preselectedStudent, preselectedTemplate, isBulk, isHydrated, students, payments])
+  }, [preselectedStudent, preselectedTemplate, isBulk, absentDate, isHydrated, students, payments, attendance])
 
   const generateMessage = (templateId: string, studentIds: string[]) => {
     const template = SMS_TEMPLATES.find(t => t.id === templateId)

@@ -75,6 +75,100 @@ export interface TutorSettings {
   nameBn: string
   phone: string
   language: 'bn' | 'en'
+  reminders?: ReminderSettings
+}
+
+export interface ReminderSettings {
+  feeReminderDay: number // Day of month to send fee reminders
+  absenceAlert: boolean // Auto-send SMS when marking absent
+  dailySummary: boolean // Daily summary at 8 PM
+  monthlyReport: boolean // Monthly report on 1st
+}
+
+// Authentication Types
+export interface AuthUser {
+  id: string
+  phone: string
+  name: string
+  role: 'tutor' | 'admin'
+  pin?: string // 4-digit PIN
+  biometricEnabled?: boolean
+  rememberDevice?: boolean
+  createdAt: string
+}
+
+export interface AuthSession {
+  user: AuthUser
+  token: string
+  expiresAt: string
+}
+
+// Admin Types
+export interface AdminTutor {
+  id: string
+  name: string
+  phone: string
+  email?: string
+  plan: 'free' | 'basic' | 'pro'
+  planExpiry: string
+  studentCount: number
+  monthlyFee: number
+  lastActive: string
+  status: 'active' | 'suspended' | 'inactive'
+  revenue: number
+  smsSent: number
+  joinedAt: string
+}
+
+export interface AdminMetrics {
+  activeTutors: number
+  mrr: number // Monthly Recurring Revenue
+  smsSent: number
+  churnRate: number
+}
+
+export interface RevenueData {
+  month: string
+  revenue: number
+  newTutors: number
+}
+
+export interface FailedPayment {
+  id: string
+  tutorId: string
+  tutorName: string
+  amount: number
+  date: string
+  reason: string
+  retryCount: number
+}
+
+export interface Invoice {
+  id: string
+  tutorId: string
+  tutorName: string
+  amount: number
+  status: 'paid' | 'pending' | 'failed'
+  createdAt: string
+  paidAt?: string
+  pdfUrl?: string
+}
+
+export interface PromoCode {
+  id: string
+  code: string
+  discount: number // percentage
+  validUntil: string
+  usageLimit: number
+  usageCount: number
+}
+
+export interface SystemAlert {
+  id: string
+  type: 'info' | 'warning' | 'error' | 'success'
+  message: string
+  createdAt: string
+  read: boolean
 }
 
 // Bangladesh GPA System

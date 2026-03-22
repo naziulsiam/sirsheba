@@ -11,8 +11,9 @@ import { toBanglaNumber } from '@/lib/types'
 import { fillTemplate, SMS_TEMPLATES } from '@/lib/sms-templates'
 import { 
   ArrowLeft, Calendar, ChevronLeft, ChevronRight, 
-  UserCheck, UserX, Check, Users, MessageSquare 
+  UserCheck, UserX, Check, Users, MessageSquare, Send, Mic
 } from 'lucide-react'
+import { VoiceInputButton } from '@/components/voice-input-button'
 
 export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
@@ -185,6 +186,30 @@ export default function AttendancePage() {
             <p className="text-[10px] text-muted-foreground">বাকি</p>
           </Card>
         </div>
+
+        {/* Send SMS to Absent Parents */}
+        {absentCount > 0 && (
+          <Card className="p-4 mb-4 border-destructive/30 bg-destructive/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-destructive">
+                  {toBanglaNumber(absentCount)} জন অনুপস্থিত
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  অভিভাবকদের SMS পাঠাতে চান?
+                </p>
+              </div>
+              <Link
+                href={`/sms?template=absence-alert&absentDate=${selectedDate}`}
+              >
+                <Button size="sm" variant="destructive">
+                  <Send className="mr-1 h-4 w-4" />
+                  SMS পাঠান
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        )}
 
         {/* Quick Actions */}
         {unmarkedCount > 0 && (
