@@ -37,11 +37,20 @@ export async function POST(req: NextRequest) {
             is_active: true,
         })
 
-        await sendOTPEmail(email, full_name, otp)
+        const emailSent = await sendOTPEmail(email, full_name, otp)
 
-        return NextResponse.json({ success: true, tutorId: tutor.id })
+        // In dev (no Resend key), return OTP directly so the UI can show it
+        const isDev = !process.env.RESEND_API_KEY
+        return NextResponse.json({
+            success: true,
+            tutorId: tutor.id,
+            emailSent,
+            // Only expose OTP in response when running without email (dev mode)
+            ...(isDev && { devOtp: otp }),
+        })
     } catch (err) {
         console.error('Register error:', err)
-        return NextResponse.json({ error: 'সার্ভার ত্রুটি' }, { status: 500 })
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        return NextResponse.json({ error: `সার্ভার ত্রুটি: ${message}` }, { status: 500 })
     }
 }

@@ -50,7 +50,9 @@ export async function PUT(req: NextRequest) {
         await db.updateTutor(tutor.id, { email_otp: otp, email_otp_expires_at: otpExpiresAt() })
         await sendOTPEmail(email, tutor.full_name, otp)
 
-        return NextResponse.json({ success: true })
+        const isDev = !process.env.RESEND_API_KEY
+        return NextResponse.json({ success: true, ...(isDev && { devOtp: otp }) })
+
     } catch (err) {
         console.error('Resend OTP error:', err)
         return NextResponse.json({ error: 'সার্ভার ত্রুটি' }, { status: 500 })

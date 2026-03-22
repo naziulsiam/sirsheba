@@ -27,9 +27,13 @@ export default function RegisterPage() {
             })
             const data = await res.json()
             if (!res.ok) { setError(data.error); return }
-            // Store email for next step
+            // Store email + name for next step
             sessionStorage.setItem('sirsheba_reg_email', form.email)
             sessionStorage.setItem('sirsheba_reg_name', form.full_name)
+            // In dev mode (no Resend key), API returns the OTP directly
+            if (data.devOtp) {
+                sessionStorage.setItem('sirsheba_dev_otp', data.devOtp)
+            }
             router.push('/verify-email')
         } catch {
             setError('সংযোগ ব্যর্থ। আবার চেষ্টা করুন।')

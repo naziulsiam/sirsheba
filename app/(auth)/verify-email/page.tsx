@@ -12,6 +12,7 @@ export default function VerifyEmailPage() {
     const [email, setEmail] = useState('')
     const [name, setName] = useState('')
     const [otp, setOtp] = useState('')
+    const [devOtp, setDevOtp] = useState('')
     const [error, setError] = useState('')
     const [loading, setLoading] = useState(false)
     const [resending, setResending] = useState(false)
@@ -20,8 +21,11 @@ export default function VerifyEmailPage() {
     useEffect(() => {
         const e = sessionStorage.getItem('sirsheba_reg_email') || ''
         const n = sessionStorage.getItem('sirsheba_reg_name') || ''
+        const d = sessionStorage.getItem('sirsheba_dev_otp') || ''
         setEmail(e)
         setName(n)
+        setDevOtp(d)
+        if (d) sessionStorage.removeItem('sirsheba_dev_otp')
         if (!e) router.push('/register')
     }, [router])
 
@@ -58,11 +62,13 @@ export default function VerifyEmailPage() {
     const handleResend = async () => {
         setResending(true)
         try {
-            await fetch('/api/auth/verify-email', {
+            const res = await fetch('/api/auth/verify-email', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email }),
             })
+            const data = await res.json()
+            if (data.devOtp) setDevOtp(data.devOtp)
             setResendCooldown(60)
             setOtp('')
         } finally {
@@ -79,9 +85,15 @@ export default function VerifyEmailPage() {
             <p className="text-sm text-muted-foreground mb-2">
                 <span className="font-medium text-foreground">{email}</span> এ ৬ সংখ্যার কোড পাঠানো হয়েছে
             </p>
-            <p className="text-xs text-muted-foreground mb-6">
-                (ইনবক্স না পেলে স্প্যাম চেক করুন)
-            </p>
+            {devOtp ? (
+                <div className="mb-4 rounded-lg border border-yellow-300 bg-yellow-50 px-3 py-2 text-left">
+                    <p className="text-xs font-semibold text-yellow-700 uppercase tracking-wide">⚙ Dev Mode — No Email Sent</p>
+                    <p className="mt-1 text-2xl font-bold tracking-widest text-yellow-900">{devOtp}</p>
+                    <p className="text-xs text-yellow-600 mt-0.5">Add RESEND_API_KEY to send real emails</p>
+                </div>
+            ) : (
+                <p className="text-xs text-muted-foreground mb-6">(ইনবক্স না পেলে স্প্যাম চেক করুন)</p>
+            )}
 
             <div className="mb-6">
                 <EmailOTPInput value={otp} onChange={setOtp} disabled={loading} />
