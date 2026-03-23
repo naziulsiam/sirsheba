@@ -137,13 +137,16 @@ export function PendingFees() {
                   </span>
                 )}
               </div>
-              <a
-                href={`tel:${student.fatherPhone}`}
-                onClick={(e) => e.stopPropagation()}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary"
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  window.location.href = `tel:${student.fatherPhone}`
+                }}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary active:bg-primary/20"
               >
                 <Phone className="h-4 w-4" />
-              </a>
+              </button>
             </Link>
           )
         })}
