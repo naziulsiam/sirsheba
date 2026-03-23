@@ -72,16 +72,18 @@ export default function SubscriptionPage() {
                 const res = await fetch('/api/subscription/status')
                 if (res.ok) {
                     const data = await res.json()
-                    setSubscription(data)
-
-                    // If already has active subscription, redirect to dashboard
+                    
+                    // If already has active subscription, redirect immediately (don't set state)
                     if (data.status === 'active' || data.status === 'trial') {
-                        router.replace('/')
+                        window.location.href = '/' // Hard navigation to ensure redirect works
                         return
                     }
+                    
+                    // Only set state if NOT redirecting
+                    setSubscription(data)
                 } else if (res.status === 401) {
                     // Not authenticated, redirect to login
-                    router.replace('/login')
+                    window.location.href = '/login'
                     return
                 }
             } catch (err) {
@@ -92,7 +94,7 @@ export default function SubscriptionPage() {
         }
 
         checkSubscription()
-    }, [router])
+    }, [])
 
     const handleSubscribe = async (planId: string) => {
         setProcessing(planId)

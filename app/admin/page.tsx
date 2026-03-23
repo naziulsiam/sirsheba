@@ -35,7 +35,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const { getMetrics, alerts, markAlertRead, tutors, revenueData, isHydrated } = useAdmin()
+  const { getMetrics, alerts, markAlertRead, tutors, revenueData } = useAdmin()
   const metrics = getMetrics()
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([])
   const [mounted, setMounted] = useState(false)
@@ -44,8 +44,8 @@ export default function AdminDashboard() {
     setMounted(true)
   }, [])
 
-  // Show loading state while data is hydrating
-  if (!isHydrated || !mounted) {
+  // Show loading state while component mounts (prevents hydration mismatch)
+  if (!mounted) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">

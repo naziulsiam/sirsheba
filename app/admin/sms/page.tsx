@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export default function AdminSMSPage() {
-  const { tutors, getMetrics, isHydrated } = useAdmin()
+  const { tutors, getMetrics } = useAdmin()
   const [mounted, setMounted] = useState(false)
   const metrics = getMetrics()
   const [showSendDialog, setShowSendDialog] = useState(false)
@@ -32,8 +32,8 @@ export default function AdminSMSPage() {
     setMounted(true)
   }, [])
   
-  // Show loading state while data is hydrating
-  if (!isHydrated || !mounted) {
+  // Show loading state while component mounts (prevents hydration mismatch)
+  if (!mounted) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">

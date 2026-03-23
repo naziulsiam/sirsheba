@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'
 import { useAuthStore } from '@/store/auth-store'
-import { useAdmin } from '@/hooks/use-store'
 import { 
   LayoutDashboard, 
   Users, 
@@ -35,7 +34,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter()
   const pathname = usePathname()
   const { user, isAuthenticated, logout } = useAuthStore()
-  const { isHydrated: adminDataHydrated } = useAdmin()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [notifications, setNotifications] = useState(3)
   const [mounted, setMounted] = useState(false)
@@ -66,8 +64,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push(href)
   }
 
-  // Don't render until mounted AND admin data is hydrated to avoid hydration mismatch
-  if (!mounted || !adminDataHydrated || !user || user.role !== 'admin') {
+  // Don't render until mounted to avoid hydration mismatch
+  if (!mounted || !user || user.role !== 'admin') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">

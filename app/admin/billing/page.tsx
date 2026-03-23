@@ -49,8 +49,7 @@ export default function BillingPage() {
     addInvoice,
     revenueData,
     addRevenueEntry,
-    updateInvoice,
-    isHydrated
+    updateInvoice
   } = useAdmin()
   
   const [mounted, setMounted] = useState(false)
@@ -70,8 +69,8 @@ export default function BillingPage() {
   const metrics = getMetrics()
   const failedPayments = getFailedPayments()
   
-  // Show loading state while data is hydrating
-  if (!isHydrated || !mounted) {
+  // Show loading state while component mounts (prevents hydration mismatch)
+  if (!mounted) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">

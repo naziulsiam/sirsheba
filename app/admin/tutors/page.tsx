@@ -44,7 +44,7 @@ type TutorStatus = 'all' | 'active' | 'suspended' | 'inactive'
 type TutorPlan = 'all' | 'free' | 'basic' | 'pro'
 
 export default function TutorsPage() {
-  const { tutors, updateTutorStatus, addTutor, deleteTutor, isHydrated } = useAdmin()
+  const { tutors, updateTutorStatus, addTutor, deleteTutor } = useAdmin()
   const [mounted, setMounted] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<TutorStatus>('all')
@@ -64,8 +64,8 @@ export default function TutorsPage() {
     setMounted(true)
   }, [])
 
-  // Show loading state while data is hydrating
-  if (!isHydrated || !mounted) {
+  // Show loading state while component mounts (prevents hydration mismatch)
+  if (!mounted) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
