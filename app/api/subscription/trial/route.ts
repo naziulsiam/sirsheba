@@ -21,8 +21,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Already has active subscription' }, { status: 400 })
         }
 
-        // Start 14-day trial
-        const trialDays = 14
+        // Start 30-day trial
+        const trialDays = 30
         const now = new Date()
         const trialEnd = new Date()
         trialEnd.setDate(trialEnd.getDate() + trialDays)

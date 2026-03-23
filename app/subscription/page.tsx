@@ -18,7 +18,7 @@ const plans = [
         id: 'trial',
         name: 'ফ্রি ট্রাইয়াল',
         price: 0,
-        period: '১৪ দিন',
+        period: '৩০ দিন',
         features: [
             'সব প্রো ফিচার ব্যবহার করুন',
             'আনলিমিটেড শিক্ষার্থী',
@@ -73,7 +73,7 @@ export default function SubscriptionPage() {
                 if (res.ok) {
                     const data = await res.json()
                     setSubscription(data)
-                    
+
                     // If already has active subscription, redirect to dashboard
                     if (data.status === 'active' || data.status === 'trial') {
                         router.push('/')
@@ -91,23 +91,23 @@ export default function SubscriptionPage() {
 
     const handleSubscribe = async (planId: string) => {
         setProcessing(planId)
-        
+
         // Simulate payment processing
         await new Promise(resolve => setTimeout(resolve, 2000))
-        
+
         // In production, this would redirect to payment gateway
         alert(`পেমেন্ট প্রসেসিং: ${planId === 'basic' ? 'বেসিক' : 'প্রো'} প্ল্যান`)
-        
+
         setProcessing(null)
     }
 
     const handleStartTrial = async () => {
         setProcessing('trial')
-        
+
         try {
             const res = await fetch('/api/subscription/trial', { method: 'POST' })
             if (res.ok) {
-                router.push('/')
+                window.location.href = '/' // Hard navigation for middleware cookie
             } else {
                 const data = await res.json()
                 alert(data.error || 'ট্রাইয়াল শুরু করতে সমস্যা হয়েছে')
@@ -116,7 +116,7 @@ export default function SubscriptionPage() {
             console.error('Trial error:', err)
             alert('ট্রাইয়াল শুরু করতে সমস্যা হয়েছে')
         }
-        
+
         setProcessing(null)
     }
 
@@ -151,13 +151,13 @@ export default function SubscriptionPage() {
                                     <Gift className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold text-amber-800">১৪ দিনের ফ্রি ট্রাইয়াল</h3>
+                                    <h3 className="text-xl font-bold text-amber-800">৩০ দিনের ফ্রি ট্রাইয়াল</h3>
                                     <p className="text-sm text-muted-foreground">
                                         সব প্রো ফিচার ফ্রি ব্যবহার করুন • কোনো ক্রেডিট কার্ড লাগবে না
                                     </p>
                                 </div>
                             </div>
-                            <Button 
+                            <Button
                                 onClick={handleStartTrial}
                                 disabled={processing === 'trial'}
                                 size="lg"
@@ -182,15 +182,14 @@ export default function SubscriptionPage() {
                 {/* Plans Grid - 3 columns on large screens */}
                 <div className="grid md:grid-cols-3 gap-6">
                     {plans.map((plan) => (
-                        <Card 
+                        <Card
                             key={plan.id}
-                            className={`p-6 relative flex flex-col ${
-                                plan.popular 
-                                    ? 'border-2 border-primary shadow-lg' 
-                                    : plan.isTrial
-                                        ? 'border-2 border-amber-400 shadow-lg bg-gradient-to-b from-amber-50/50 to-background'
-                                        : 'border'
-                            }`}
+                            className={`p-6 relative flex flex-col ${plan.popular
+                                ? 'border-2 border-primary shadow-lg'
+                                : plan.isTrial
+                                    ? 'border-2 border-amber-400 shadow-lg bg-gradient-to-b from-amber-50/50 to-background'
+                                    : 'border'
+                                }`}
                         >
                             {plan.popular && (
                                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -208,9 +207,8 @@ export default function SubscriptionPage() {
                             )}
 
                             <div className="text-center mb-6">
-                                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${
-                                    plan.isTrial ? 'bg-amber-100' : 'bg-primary/10'
-                                }`}>
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${plan.isTrial ? 'bg-amber-100' : 'bg-primary/10'
+                                    }`}>
                                     {plan.isTrial ? (
                                         <Gift className="w-6 h-6 text-amber-600" />
                                     ) : plan.popular ? (
@@ -231,7 +229,7 @@ export default function SubscriptionPage() {
                                     )}
                                 </div>
                                 {plan.isTrial && (
-                                    <p className="text-sm text-amber-600 mt-1">১৪ দিনের জন্য</p>
+                                    <p className="text-sm text-amber-600 mt-1">৩০ দিনের জন্য</p>
                                 )}
                             </div>
 
@@ -245,7 +243,7 @@ export default function SubscriptionPage() {
                             </ul>
 
                             {plan.isTrial ? (
-                                <Button 
+                                <Button
                                     className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
                                     onClick={handleStartTrial}
                                     disabled={processing === 'trial'}
@@ -263,7 +261,7 @@ export default function SubscriptionPage() {
                                     )}
                                 </Button>
                             ) : (
-                                <Button 
+                                <Button
                                     className="w-full"
                                     variant={plan.popular ? 'default' : 'outline'}
                                     onClick={() => handleSubscribe(plan.id)}

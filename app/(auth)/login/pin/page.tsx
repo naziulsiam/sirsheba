@@ -45,15 +45,15 @@ function LoginPINContent() {
             }
             login({ id: data.user.id, email: data.user.email, name: data.user.name, nameBn: data.user.name || '', phone: data.user.phone, role: data.user.role })
             sessionStorage.removeItem('sirsheba_login_id')
-            
-            // Redirect based on role
+
+            // Redirect based on role using hard navigation to ensure middleware sees new cookie immediately
             const from = searchParams.get('from')
             if (from) {
-                router.push(from)
+                window.location.href = from
             } else if (data.user.role === 'admin') {
-                router.push('/admin')
+                window.location.href = '/admin'
             } else {
-                router.push('/')
+                window.location.href = '/'
             }
         } catch {
             setError('সংযোগ ব্যর্থ')
