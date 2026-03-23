@@ -9,6 +9,7 @@ export interface AuthUser {
     name: string
     nameBn: string
     phone: string
+    role: 'tutor' | 'admin'
 }
 
 interface AuthState {

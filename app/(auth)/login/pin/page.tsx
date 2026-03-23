@@ -43,7 +43,7 @@ function LoginPINContent() {
                 setError(data.error)
                 return
             }
-            login({ id: data.user.id, email: data.user.email, name: data.user.name, nameBn: '', phone: data.user.phone })
+            login({ id: data.user.id, email: data.user.email, name: data.user.name, nameBn: '', phone: data.user.phone, role: data.user.role })
             sessionStorage.removeItem('sirsheba_login_id')
             const from = searchParams.get('from') || '/'
             router.push(from)

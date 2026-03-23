@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            user: { id: tutor.id, name: tutor.full_name, email: tutor.email, phone: tutor.phone },
+            user: { id: tutor.id, name: tutor.full_name, email: tutor.email, phone: tutor.phone, role: tutor.role },
         })
     } catch (err) {
         console.error('Login error:', err)

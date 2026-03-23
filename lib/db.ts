@@ -11,6 +11,7 @@ export interface TutorRecord {
     email_otp: string | null
     email_otp_expires_at: string | null
     plan_type: 'free' | 'basic' | 'pro'
+    role: 'tutor' | 'admin'
     is_active: boolean
     created_at: string
     updated_at: string
@@ -99,6 +100,7 @@ export const db = {
 
         const tutor: TutorRecord = {
             ...data,
+            role: data.role || 'tutor',
             email: data.email.toLowerCase(),
             id: generateId(),
             created_at: now,

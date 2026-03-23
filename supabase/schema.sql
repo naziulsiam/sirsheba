@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS tutors (
   email_otp       TEXT,
   email_otp_expires_at TIMESTAMPTZ,
   plan_type       TEXT NOT NULL DEFAULT 'free' CHECK (plan_type IN ('free', 'basic', 'pro')),
+  role            TEXT NOT NULL DEFAULT 'tutor' CHECK (role IN ('tutor', 'admin')),
   is_active       BOOLEAN NOT NULL DEFAULT true,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
