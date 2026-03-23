@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Check, Crown, Sparkles, Loader2 } from 'lucide-react'
+import { Check, Crown, Sparkles, Loader2, Gift, Clock, Zap } from 'lucide-react'
 
 interface SubscriptionStatus {
     status: 'active' | 'inactive' | 'trial' | 'expired'
@@ -14,6 +14,20 @@ interface SubscriptionStatus {
 }
 
 const plans = [
+    {
+        id: 'trial',
+        name: 'ফ্রি ট্রাইয়াল',
+        price: 0,
+        period: '১৪ দিন',
+        features: [
+            'সব প্রো ফিচার ব্যবহার করুন',
+            'আনলিমিটেড শিক্ষার্থী',
+            'আনলিমিটেড SMS',
+            'কোনো ক্রেডিট কার্ড লাগবে না',
+        ],
+        popular: false,
+        isTrial: true,
+    },
     {
         id: 'basic',
         name: 'বেসিক',
@@ -26,6 +40,7 @@ const plans = [
             'ইমেইল সাপোর্ট',
         ],
         popular: false,
+        isTrial: false,
     },
     {
         id: 'pro',
@@ -41,6 +56,7 @@ const plans = [
             'ব্যাচ ম্যানেজমেন্ট',
         ],
         popular: true,
+        isTrial: false,
     },
 ]
 
@@ -93,7 +109,8 @@ export default function SubscriptionPage() {
             if (res.ok) {
                 router.push('/')
             } else {
-                alert('ট্রাইয়াল শুরু করতে সমস্যা হয়েছে')
+                const data = await res.json()
+                alert(data.error || 'ট্রাইয়াল শুরু করতে সমস্যা হয়েছে')
             }
         } catch (err) {
             console.error('Trial error:', err)
@@ -113,7 +130,7 @@ export default function SubscriptionPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background py-12 px-4">
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-6xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-12">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
@@ -125,25 +142,26 @@ export default function SubscriptionPage() {
                     </p>
                 </div>
 
-                {/* Trial Banner */}
+                {/* Trial Banner - Prominent */}
                 {subscription?.status !== 'trial' && subscription?.status !== 'active' && (
-                    <Card className="p-6 mb-8 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-200">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
-                                    <Sparkles className="w-6 h-6 text-amber-600" />
+                    <Card className="p-8 mb-10 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-amber-200">
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                                    <Gift className="w-8 h-8 text-white" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold">১৪ দিনের ফ্রি ট্রাইয়াল</h3>
+                                    <h3 className="text-xl font-bold text-amber-800">১৪ দিনের ফ্রি ট্রাইয়াল</h3>
                                     <p className="text-sm text-muted-foreground">
-                                        কোনো ক্রেডিট কার্ড ছাড়াই শুরু করুন
+                                        সব প্রো ফিচার ফ্রি ব্যবহার করুন • কোনো ক্রেডিট কার্ড লাগবে না
                                     </p>
                                 </div>
                             </div>
                             <Button 
                                 onClick={handleStartTrial}
                                 disabled={processing === 'trial'}
-                                className="bg-amber-600 hover:bg-amber-700"
+                                size="lg"
+                                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
                             >
                                 {processing === 'trial' ? (
                                     <>
@@ -151,22 +169,27 @@ export default function SubscriptionPage() {
                                         শুরু হচ্ছে...
                                     </>
                                 ) : (
-                                    'ট্রাইয়াল শুরু করুন'
+                                    <>
+                                        <Zap className="w-4 h-4 mr-2" />
+                                        ট্রাইয়াল শুরু করুন
+                                    </>
                                 )}
                             </Button>
                         </div>
                     </Card>
                 )}
 
-                {/* Plans */}
-                <div className="grid md:grid-cols-2 gap-6">
+                {/* Plans Grid - 3 columns on large screens */}
+                <div className="grid md:grid-cols-3 gap-6">
                     {plans.map((plan) => (
                         <Card 
                             key={plan.id}
-                            className={`p-6 relative ${
+                            className={`p-6 relative flex flex-col ${
                                 plan.popular 
                                     ? 'border-2 border-primary shadow-lg' 
-                                    : 'border'
+                                    : plan.isTrial
+                                        ? 'border-2 border-amber-400 shadow-lg bg-gradient-to-b from-amber-50/50 to-background'
+                                        : 'border'
                             }`}
                         >
                             {plan.popular && (
@@ -176,39 +199,86 @@ export default function SubscriptionPage() {
                                     </span>
                                 </div>
                             )}
+                            {plan.isTrial && (
+                                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                                    <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                        ফ্রি
+                                    </span>
+                                </div>
+                            )}
 
                             <div className="text-center mb-6">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 ${
+                                    plan.isTrial ? 'bg-amber-100' : 'bg-primary/10'
+                                }`}>
+                                    {plan.isTrial ? (
+                                        <Gift className="w-6 h-6 text-amber-600" />
+                                    ) : plan.popular ? (
+                                        <Crown className="w-6 h-6 text-primary" />
+                                    ) : (
+                                        <Sparkles className="w-6 h-6 text-primary" />
+                                    )}
+                                </div>
                                 <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
                                 <div className="flex items-baseline justify-center gap-1">
-                                    <span className="text-4xl font-bold">৳{plan.price}</span>
-                                    <span className="text-muted-foreground">/{plan.period}</span>
+                                    {plan.price === 0 ? (
+                                        <span className="text-4xl font-bold text-amber-600">ফ্রি</span>
+                                    ) : (
+                                        <>
+                                            <span className="text-4xl font-bold">৳{plan.price}</span>
+                                            <span className="text-muted-foreground">/{plan.period}</span>
+                                        </>
+                                    )}
                                 </div>
+                                {plan.isTrial && (
+                                    <p className="text-sm text-amber-600 mt-1">১৪ দিনের জন্য</p>
+                                )}
                             </div>
 
-                            <ul className="space-y-3 mb-6">
+                            <ul className="space-y-3 mb-6 flex-1">
                                 {plan.features.map((feature, idx) => (
                                     <li key={idx} className="flex items-center gap-3">
-                                        <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
-                                        <span>{feature}</span>
+                                        <Check className={`w-5 h-5 flex-shrink-0 ${plan.isTrial ? 'text-amber-600' : 'text-green-600'}`} />
+                                        <span className="text-sm">{feature}</span>
                                     </li>
                                 ))}
                             </ul>
 
-                            <Button 
-                                className="w-full"
-                                variant={plan.popular ? 'default' : 'outline'}
-                                onClick={() => handleSubscribe(plan.id)}
-                                disabled={processing === plan.id}
-                            >
-                                {processing === plan.id ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        প্রসেসিং...
-                                    </>
-                                ) : (
-                                    'সাবস্ক্রাইব করুন'
-                                )}
-                            </Button>
+                            {plan.isTrial ? (
+                                <Button 
+                                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+                                    onClick={handleStartTrial}
+                                    disabled={processing === 'trial'}
+                                >
+                                    {processing === 'trial' ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            শুরু হচ্ছে...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Clock className="w-4 h-4 mr-2" />
+                                            ট্রাইয়াল শুরু করুন
+                                        </>
+                                    )}
+                                </Button>
+                            ) : (
+                                <Button 
+                                    className="w-full"
+                                    variant={plan.popular ? 'default' : 'outline'}
+                                    onClick={() => handleSubscribe(plan.id)}
+                                    disabled={processing === plan.id}
+                                >
+                                    {processing === plan.id ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            প্রসেসিং...
+                                        </>
+                                    ) : (
+                                        'সাবস্ক্রাইব করুন'
+                                    )}
+                                </Button>
+                            )}
                         </Card>
                     ))}
                 </div>

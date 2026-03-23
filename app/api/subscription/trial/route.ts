@@ -22,9 +22,25 @@ export async function POST(req: NextRequest) {
         }
 
         // Start 14-day trial
-        await db.startTrial(session.sub, 14)
+        const trialDays = 14
+        const now = new Date()
+        const trialEnd = new Date()
+        trialEnd.setDate(trialEnd.getDate() + trialDays)
 
-        return NextResponse.json({ success: true, message: 'Trial started' })
+        await db.startTrial(session.sub, trialDays)
+
+        // IMPORT: Refresh session cookie so middleware/client see the new status
+        const { signToken, setSessionCookie } = await import('@/lib/auth')
+        const newPayload = {
+            ...session,
+            subscription: 'trial' as const,
+            subscriptionExpiry: trialEnd.toISOString()
+        }
+
+        const newToken = await signToken(newPayload)
+        await setSessionCookie(newToken)
+
+        return NextResponse.json({ success: true, message: 'Trial started', subscription: 'trial' })
     } catch (err) {
         console.error('Trial start error:', err)
         return NextResponse.json({ error: 'Server error' }, { status: 500 })
