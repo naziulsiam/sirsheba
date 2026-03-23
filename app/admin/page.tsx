@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAdmin } from '@/hooks/use-store'
@@ -30,9 +31,9 @@ import {
 } from 'recharts'
 import { toBanglaNumber, formatTaka } from '@/lib/types'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import Link from 'next/link'
 
 export default function AdminDashboard() {
+  const router = useRouter()
   const { getMetrics, alerts, markAlertRead, tutors, revenueData } = useAdmin()
   const metrics = getMetrics()
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([])
@@ -49,6 +50,10 @@ export default function AdminDashboard() {
 
   const handleDismissAlert = (id: string) => {
     setDismissedAlerts(prev => [...prev, id])
+  }
+
+  const navigateToTutors = () => {
+    router.push('/admin/tutors')
   }
 
   return (
@@ -70,19 +75,17 @@ export default function AdminDashboard() {
           <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">কোনো টিউটর নেই</h3>
           <p className="text-muted-foreground mb-4">প্রথম টিউটর যোগ করুন</p>
-          <Link href="/admin/tutors">
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              টিউটর যোগ করুন
-            </Button>
-          </Link>
+          <Button onClick={navigateToTutors}>
+            <Plus className="w-4 h-4 mr-2" />
+            টিউটর যোগ করুন
+          </Button>
         </Card>
       )}
 
       {/* Metrics Grid */}
       {tutors.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-5">
+          <Card className="p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={navigateToTutors}>
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">সক্রিয় টিউটর</p>
@@ -300,13 +303,15 @@ export default function AdminDashboard() {
         <Card className="p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold">সাম্প্রতিক কার্যকলাপ</h3>
-            <Link href="/admin/tutors">
-              <Button variant="ghost" size="sm">সব দেখুন</Button>
-            </Link>
+            <Button variant="ghost" size="sm" onClick={navigateToTutors}>সব দেখুন</Button>
           </div>
           <div className="space-y-3">
             {tutors.slice(0, 5).map((tutor) => (
-              <div key={tutor.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+              <div 
+                key={tutor.id} 
+                className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={() => router.push(`/admin/tutors/${tutor.id}`)}
+              >
                 <Avatar className="w-10 h-10">
                   <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
                     {tutor.name.charAt(0)}

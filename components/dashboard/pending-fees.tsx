@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -10,6 +10,7 @@ import { AlertTriangle, ChevronRight, Phone } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
 
 export function PendingFees() {
+  const router = useRouter()
   const { students, isHydrated: studentsHydrated } = useStudents()
   const { payments, isHydrated: paymentsHydrated } = useFeePayments()
   const { getBatch, isHydrated: batchesHydrated } = useBatches()
@@ -99,22 +100,20 @@ export function PendingFees() {
             </p>
           </div>
         </div>
-        <Link href="/fees/pending">
-          <Button variant="ghost" size="sm" className="h-8 text-xs">
-            {t('viewAll')}
-            <ChevronRight className="ml-1 h-3 w-3" />
-          </Button>
-        </Link>
+        <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => router.push('/fees/pending')}>
+          {t('viewAll')}
+          <ChevronRight className="ml-1 h-3 w-3" />
+        </Button>
       </div>
 
       <div className="space-y-2">
         {pendingStudents.slice(0, 3).map((student) => {
           const name = lang === 'bn' ? student.nameBn : student.nameEn
           return (
-            <Link
+            <div
               key={student.id}
-              href={`/students/${student.id}`}
-              className="flex items-center gap-3 rounded-lg bg-muted/50 p-2 transition-colors active:bg-muted"
+              onClick={() => router.push(`/students/${student.id}`)}
+              className="flex items-center gap-3 rounded-lg bg-muted/50 p-2 transition-colors active:bg-muted cursor-pointer"
             >
               <Avatar className="h-10 w-10">
                 <AvatarFallback className="bg-destructive/10 text-destructive text-sm">
@@ -139,7 +138,6 @@ export function PendingFees() {
               </div>
               <button
                 onClick={(e) => {
-                  e.preventDefault()
                   e.stopPropagation()
                   window.location.href = `tel:${student.fatherPhone}`
                 }}
@@ -147,7 +145,7 @@ export function PendingFees() {
               >
                 <Phone className="h-4 w-4" />
               </button>
-            </Link>
+            </div>
           )
         })}
       </div>

@@ -1,7 +1,6 @@
 'use client'
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Home, Users, Plus, MessageSquare, LayoutGrid } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from '@/hooks/use-translation'
@@ -17,7 +16,12 @@ const navItems: { href: string; icon: React.ElementType; key: TranslationKey; is
 
 export function BottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
   const { t } = useTranslation()
+
+  const handleNavClick = (href: string) => {
+    router.push(href)
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-white/40 pb-safe shadow-elevated">
@@ -30,25 +34,25 @@ export function BottomNav() {
 
           if (item.isMain) {
             return (
-              <Link
+              <button
                 key={item.href}
-                href={item.href}
-                className="relative -mt-5 flex flex-col items-center gap-0.5 press"
+                onClick={() => handleNavClick(item.href)}
+                className="relative -mt-5 flex flex-col items-center gap-0.5 press cursor-pointer"
               >
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl gradient-primary shadow-elevated">
                   <Icon className="h-6 w-6 text-white" />
                 </div>
                 <span className="mt-0.5 text-[10px] font-semibold text-primary">{label}</span>
-              </Link>
+              </button>
             )
           }
 
           return (
-            <Link
+            <button
               key={item.href}
-              href={item.href}
+              onClick={() => handleNavClick(item.href)}
               className={cn(
-                'flex min-w-[60px] flex-col items-center gap-1 py-1.5 transition-all press touch-target',
+                'flex min-w-[60px] flex-col items-center gap-1 py-1.5 transition-all press touch-target cursor-pointer',
                 isActive ? 'text-primary' : 'text-muted-foreground/70'
               )}
             >
@@ -59,7 +63,7 @@ export function BottomNav() {
                 <Icon className={cn('h-5 w-5 transition-all', isActive && 'scale-110')} />
               </div>
               <span className={cn('text-[10px] font-medium', isActive && 'font-semibold')}>{label}</span>
-            </Link>
+            </button>
           )
         })}
       </div>

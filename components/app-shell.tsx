@@ -1,11 +1,10 @@
 'use client'
 
-
 import { BottomNav } from './bottom-nav'
 import { LanguageToggle } from './language-toggle'
 import { GraduationCap, Wifi, WifiOff, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useTranslation } from '@/hooks/use-translation'
 
 interface AppShellProps {
@@ -16,6 +15,7 @@ interface AppShellProps {
 
 export function AppShell({ children, title }: AppShellProps) {
   const [isOnline, setIsOnline] = useState(true)
+  const router = useRouter()
   const { t } = useTranslation()
 
   useEffect(() => {
@@ -73,9 +73,12 @@ export function AppShell({ children, title }: AppShellProps) {
 
             {/* Settings shortcut on home */}
             {isHome && (
-              <Link href="/settings" className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25">
+              <button 
+                onClick={() => router.push('/settings')}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white transition-colors hover:bg-white/25 cursor-pointer"
+              >
                 <Settings className="h-4 w-4" />
-              </Link>
+              </button>
             )}
           </div>
         </div>
