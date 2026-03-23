@@ -3,43 +3,43 @@
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { Plus, ClipboardList, Bell, FileText } from 'lucide-react'
+import { useTranslation } from '@/hooks/use-translation'
+import type { TranslationKey } from '@/lib/translations'
 
-const actions = [
+const actions: { href: string; icon: React.ElementType; key: TranslationKey; color: string }[] = [
   {
     href: '/fees/quick',
     icon: Plus,
-    label: 'ক্যাশ এন্ট্রি',
-    labelEn: 'Cash Entry',
+    key: 'collectFee',
     color: 'bg-primary text-primary-foreground',
   },
   {
     href: '/attendance',
     icon: ClipboardList,
-    label: 'উপস্থিতি',
-    labelEn: 'Attendance',
+    key: 'attendance',
     color: 'bg-chart-2 text-card',
   },
   {
     href: '/sms?template=fee-reminder',
     icon: Bell,
-    label: 'ফি স্মরণ',
-    labelEn: 'Fee Reminder',
+    key: 'sendSms',
     color: 'bg-warning text-warning-foreground',
   },
   {
     href: '/exams/new',
     icon: FileText,
-    label: 'নতুন পরীক্ষা',
-    labelEn: 'New Exam',
+    key: 'exams',
     color: 'bg-chart-5 text-card',
   },
 ]
 
 export function QuickActions() {
+  const { t } = useTranslation()
+
   return (
     <Card className="p-4">
       <h2 className="mb-3 text-sm font-semibold text-foreground">
-        দ্রুত কাজ
+        {t('quickActions')}
       </h2>
       <div className="grid grid-cols-4 gap-2">
         {actions.map((action) => {
@@ -54,7 +54,7 @@ export function QuickActions() {
                 <Icon className="h-6 w-6" />
               </div>
               <span className="text-center text-[10px] font-medium text-muted-foreground leading-tight">
-                {action.label}
+                {t(action.key)}
               </span>
             </Link>
           )

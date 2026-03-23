@@ -2,8 +2,9 @@
 
 import { Card } from '@/components/ui/card'
 import { useStudents, useFeePayments, useAttendance, useSMSLogs } from '@/hooks/use-store'
-import { formatTaka, toBanglaNumber, BANGLA_MONTHS } from '@/lib/types'
-import { Banknote, UserCheck, UserX, MessageSquare, UserPlus } from 'lucide-react'
+import { formatTaka, formatNumber, BANGLA_MONTHS, ENGLISH_MONTHS } from '@/lib/types'
+import { Banknote, UserCheck, UserX, MessageSquare } from 'lucide-react'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface Activity {
   id: string
@@ -21,6 +22,7 @@ export function RecentActivity() {
   const { payments, isHydrated: paymentsHydrated } = useFeePayments()
   const { attendance, isHydrated: attendanceHydrated } = useAttendance()
   const { logs, isHydrated: smsHydrated } = useSMSLogs()
+  const { t, lang } = useTranslation()
 
   const isHydrated = studentsHydrated && paymentsHydrated && attendanceHydrated && smsHydrated
 
@@ -34,18 +36,20 @@ export function RecentActivity() {
 
   const getStudentName = (id: string) => {
     const student = students.find(s => s.id === id)
-    return student?.nameBn || 'অজানা'
+    if (!student) return t('error')
+    return lang === 'bn' ? student.nameBn : student.nameEn
   }
 
   const activities: Activity[] = []
 
   // Add payments
   payments.forEach(p => {
+    const monthName = lang === 'bn' ? BANGLA_MONTHS[p.month - 1] : ENGLISH_MONTHS[p.month - 1]
     activities.push({
       id: `payment-${p.id}`,
       type: 'payment',
       studentName: getStudentName(p.studentId),
-      description: `${formatTaka(p.amount)} ফি প্রদান (${BANGLA_MONTHS[p.month - 1]})`,
+      description: `${formatTaka(p.amount, lang)} ${t('paid')} (${monthName})`,
       timestamp: new Date(p.date),
       icon: Banknote,
       iconBg: 'bg-primary/10',
@@ -59,7 +63,7 @@ export function RecentActivity() {
       id: `attendance-${a.id}`,
       type: a.status === 'present' ? 'attendance_present' : 'attendance_absent',
       studentName: getStudentName(a.studentId),
-      description: a.status === 'present' ? 'উপস্থিত ছিল' : 'অনুপস্থিত ছিল',
+      description: a.status === 'present' ? t('present') : t('absent'),
       timestamp: new Date(a.date),
       icon: a.status === 'present' ? UserCheck : UserX,
       iconBg: a.status === 'present' ? 'bg-primary/10' : 'bg-destructive/10',
@@ -73,7 +77,7 @@ export function RecentActivity() {
       id: `sms-${l.id}`,
       type: 'sms',
       studentName: getStudentName(l.studentId),
-      description: l.status === 'sent' ? 'SMS পাঠানো হয়েছে' : 'SMS পেন্ডিং',
+      description: l.status === 'sent' ? t('success') : t('loading'),
       timestamp: new Date(l.sentAt),
       icon: MessageSquare,
       iconBg: 'bg-chart-5/10',
@@ -93,21 +97,21 @@ export function RecentActivity() {
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const days = Math.floor(diff / (1000 * 60 * 60 * 24))
 
-    if (minutes < 1) return 'এইমাত্র'
-    if (minutes < 60) return `${toBanglaNumber(minutes)} মিনিট আগে`
-    if (hours < 24) return `${toBanglaNumber(hours)} ঘণ্টা আগে`
-    if (days < 7) return `${toBanglaNumber(days)} দিন আগে`
-    return date.toLocaleDateString('bn-BD')
+    if (minutes < 1) return lang === 'bn' ? 'এইমাত্র' : 'Just now'
+    if (minutes < 60) return `${formatNumber(minutes, lang)} ${lang === 'bn' ? 'মিনিট আগে' : 'min ago'}`
+    if (hours < 24) return `${formatNumber(hours, lang)} ${lang === 'bn' ? 'ঘণ্টা আগে' : 'hours ago'}`
+    if (days < 7) return `${formatNumber(days, lang)} ${lang === 'bn' ? 'দিন আগে' : 'days ago'}`
+    return date.toLocaleDateString(lang === 'bn' ? 'bn-BD' : 'en-US')
   }
 
   if (recentActivities.length === 0) {
     return (
       <Card className="p-4">
         <h2 className="mb-3 text-sm font-semibold text-foreground">
-          সাম্প্রতিক কার্যকলাপ
+          {t('recentActivity')}
         </h2>
         <p className="text-center text-sm text-muted-foreground py-8">
-          কোনো কার্যকলাপ নেই
+          {t('noActivity')}
         </p>
       </Card>
     )
@@ -116,7 +120,7 @@ export function RecentActivity() {
   return (
     <Card className="p-4">
       <h2 className="mb-3 text-sm font-semibold text-foreground">
-        সাম্প্রতিক কার্যকলাপ
+        {t('recentActivity')}
       </h2>
       <div className="space-y-3">
         {recentActivities.map((activity) => {

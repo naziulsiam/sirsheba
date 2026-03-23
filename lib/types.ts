@@ -200,17 +200,30 @@ export const BANGLA_MONTHS = [
   'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'
 ]
 
-// Convert to Bangla numerals
-export function toBanglaNumber(num: number): string {
+// English month names
+export const ENGLISH_MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+]
+
+// Convert to localized numerals
+export function formatNumber(num: number | string, lang: 'bn' | 'en' = 'bn'): string {
+  if (lang === 'en') return num.toString()
   const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
   return num.toString().split('').map(d => banglaDigits[parseInt(d)] || d).join('')
 }
 
+/** @deprecated Use formatNumber instead */
+export function toBanglaNumber(num: number): string {
+  return formatNumber(num, 'bn')
+}
+
 // Format currency in Bangladeshi Taka
-export function formatTaka(amount: number): string {
-  // Apply commas on ASCII digits first, then convert each digit to Bangla
-  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
+export function formatTaka(amount: number, lang: 'bn' | 'en' = 'bn'): string {
   const withCommas = amount.toLocaleString('en-IN') // e.g. "3,000"
+  if (lang === 'en') return `৳${withCommas}`
+
+  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯']
   const bangla = withCommas.split('').map(c => {
     const d = parseInt(c)
     return isNaN(d) ? c : banglaDigits[d]

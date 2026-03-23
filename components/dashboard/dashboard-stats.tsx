@@ -2,14 +2,16 @@
 
 import { Card } from '@/components/ui/card'
 import { useStudents, useFeePayments, useAttendance, useSMSLogs } from '@/hooks/use-store'
-import { formatTaka, toBanglaNumber } from '@/lib/types'
+import { formatTaka, formatNumber } from '@/lib/types'
 import { Banknote, AlertTriangle, Users, MessageSquare } from 'lucide-react'
+import { useTranslation } from '@/hooks/use-translation'
 
 export function DashboardStats() {
   const { students, isHydrated: studentsHydrated } = useStudents()
   const { getTodaysPayments, payments, isHydrated: paymentsHydrated } = useFeePayments()
   const { getDateAttendance, isHydrated: attendanceHydrated } = useAttendance()
   const { getPendingLogs, isHydrated: smsHydrated } = useSMSLogs()
+  const { t, lang } = useTranslation()
 
   const isHydrated = studentsHydrated && paymentsHydrated && attendanceHydrated && smsHydrated
 
@@ -46,40 +48,36 @@ export function DashboardStats() {
 
   const stats = [
     {
-      label: 'আজকের আয়',
-      labelEn: "Today's Cash",
-      value: formatTaka(todaysTotal),
-      subtext: `${toBanglaNumber(todaysPayments.length)} জন থেকে`,
+      label: t('todaysCash'),
+      value: formatTaka(todaysTotal, lang),
+      subtext: `${formatNumber(todaysPayments.length, lang)} ${t('persons')} ${t('from')}`,
       icon: Banknote,
       bgColor: 'bg-primary/10',
       textColor: 'text-primary',
       iconColor: 'text-primary',
     },
     {
-      label: 'বকেয়া ফি',
-      labelEn: 'Pending Fees',
-      value: `${toBanglaNumber(pendingCount)} জন`,
-      subtext: 'এই মাসে',
+      label: t('pendingFees'),
+      value: `${formatNumber(pendingCount, lang)} ${t('persons')}`,
+      subtext: t('thisMonth'),
       icon: AlertTriangle,
       bgColor: pendingCount > 0 ? 'bg-destructive/10' : 'bg-muted',
       textColor: pendingCount > 0 ? 'text-destructive' : 'text-muted-foreground',
       iconColor: pendingCount > 0 ? 'text-destructive' : 'text-muted-foreground',
     },
     {
-      label: 'আজকের উপস্থিতি',
-      labelEn: "Today's Attendance",
-      value: `${toBanglaNumber(attendancePercent)}%`,
-      subtext: `${toBanglaNumber(presentCount)}/${toBanglaNumber(activeStudents.length)} জন`,
+      label: t('todaysAttendance'),
+      value: `${formatNumber(attendancePercent, lang)}%`,
+      subtext: `${formatNumber(presentCount, lang)}/${formatNumber(activeStudents.length, lang)} ${t('persons')}`,
       icon: Users,
       bgColor: 'bg-chart-2/10',
       textColor: 'text-chart-2',
       iconColor: 'text-chart-2',
     },
     {
-      label: 'পেন্ডিং SMS',
-      labelEn: 'Pending SMS',
-      value: toBanglaNumber(pendingSMS),
-      subtext: 'পাঠানো বাকি',
+      label: t('pendingSms'),
+      value: formatNumber(pendingSMS, lang),
+      subtext: t('sentRemaining'),
       icon: MessageSquare,
       bgColor: 'bg-chart-5/10',
       textColor: 'text-chart-5',

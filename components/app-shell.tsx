@@ -1,9 +1,12 @@
 'use client'
 
+
 import { BottomNav } from './bottom-nav'
+import { LanguageToggle } from './language-toggle'
 import { GraduationCap, Wifi, WifiOff, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useTranslation } from '@/hooks/use-translation'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -13,6 +16,7 @@ interface AppShellProps {
 
 export function AppShell({ children, title }: AppShellProps) {
   const [isOnline, setIsOnline] = useState(true)
+  const { t } = useTranslation()
 
   useEffect(() => {
     setIsOnline(navigator.onLine)
@@ -39,10 +43,10 @@ export function AppShell({ children, title }: AppShellProps) {
                 </div>
                 <div>
                   <h1 className="text-[17px] font-bold leading-tight text-white tracking-tight">
-                    SirSheba
+                    {t('appName')}
                   </h1>
                   <p className="text-[10px] leading-tight text-white/75">
-                    আপনার টিউশন, স্মার্টভাবে
+                    {t('appTagline')}
                   </p>
                 </div>
               </>
@@ -55,14 +59,17 @@ export function AppShell({ children, title }: AppShellProps) {
           <div className="flex items-center gap-2">
             {/* Online indicator */}
             <div className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium transition-all ${isOnline
-                ? 'bg-white/15 text-white'
-                : 'bg-red-500/30 text-white'
+              ? 'bg-white/15 text-white'
+              : 'bg-red-500/30 text-white'
               }`}>
               {isOnline
-                ? <><Wifi className="h-3 w-3" /><span className="hidden xs:inline">অনলাইন</span></>
-                : <><WifiOff className="h-3 w-3" /><span>অফলাইন</span></>
+                ? <><Wifi className="h-3 w-3" /><span className="hidden xs:inline">{t('online')}</span></>
+                : <><WifiOff className="h-3 w-3" /><span>{t('offline')}</span></>
               }
             </div>
+
+            {/* Language toggle — always visible */}
+            <LanguageToggle />
 
             {/* Settings shortcut on home */}
             {isHome && (
