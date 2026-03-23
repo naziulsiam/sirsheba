@@ -1,9 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/hooks/use-store'
+import { useAuthStore } from '@/store/auth-store'
 import { 
   LayoutDashboard, 
   Users, 
@@ -34,28 +33,44 @@ const sidebarLinks = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const { session, logout, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, logout } = useAuthStore()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [notifications, setNotifications] = useState(3)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Check admin authentication
   useEffect(() => {
-    if (!isAuthenticated()) {
-      router.push('/auth')
+    if (!mounted) return
+    
+    if (!isAuthenticated) {
+      router.push('/login')
       return
     }
-    if (session?.user.role !== 'admin') {
+    if (user?.role !== 'admin') {
       router.push('/')
     }
-  }, [isAuthenticated, session, router])
+  }, [isAuthenticated, user, router, mounted])
 
-  const handleLogout = () => {
-    logout()
-    router.push('/auth')
+  const handleLogout = async () => {
+    await logout()
+    router.push('/login')
   }
 
-  if (!session?.user || session.user.role !== 'admin') {
-    return null
+  const handleNavClick = (href: string) => {
+    router.push(href)
+  }
+
+  // Don't render until mounted to avoid hydration mismatch
+  if (!mounted || !user || user.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    )
   }
 
   return (
@@ -81,11 +96,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             const Icon = link.icon
             const isActive = pathname === link.href || pathname.startsWith(`${link.href}/`)
             return (
-              <Link
+              <button
                 key={link.href}
-                href={link.href}
+                onClick={() => handleNavClick(link.href)}
                 className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-left
                   ${isActive 
                     ? 'bg-primary text-primary-foreground' 
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -94,7 +109,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <Icon className="w-5 h-5" />
                 {link.label}
-              </Link>
+              </button>
             )
           })}
         </nav>
@@ -108,8 +123,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{session.user.name}</p>
-              <p className="text-xs text-muted-foreground">{session.user.phone}</p>
+              <p className="text-sm font-medium truncate">{user.name}</p>
+              <p className="text-xs text-muted-foreground">{user.phone}</p>
             </div>
           </div>
           <Button 
@@ -148,12 +163,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 const Icon = link.icon
                 const isActive = pathname === link.href
                 return (
-                  <Link
+                  <button
                     key={link.href}
-                    href={link.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false)
+                      handleNavClick(link.href)
+                    }}
                     className={`
-                      flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+                      flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full text-left
                       ${isActive 
                         ? 'bg-primary text-primary-foreground' 
                         : 'text-muted-foreground hover:bg-muted'
@@ -162,7 +179,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   >
                     <Icon className="w-5 h-5" />
                     {link.label}
-                  </Link>
+                  </button>
                 )
               })}
             </nav>

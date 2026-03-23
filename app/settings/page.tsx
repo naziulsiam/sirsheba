@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { AppShell } from '@/components/app-shell'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -27,6 +28,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 
 export default function SettingsPage() {
+  const router = useRouter()
   const { settings, updateSettings, updateReminders, isHydrated } = useSettings()
   const { students } = useStudents()
   const { batches } = useBatches()
@@ -372,7 +374,10 @@ export default function SettingsPage() {
         {/* Logout */}
         <Button
           variant="outline"
-          onClick={logout}
+          onClick={async () => {
+            await logout()
+            router.push('/login')
+          }}
           className="w-full h-11"
         >
           লগআউট

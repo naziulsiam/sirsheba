@@ -38,7 +38,7 @@ function LoginPasswordContent() {
             })
             const data = await res.json()
             if (!res.ok) { setError(data.error); return }
-            login({ id: data.user.id, email: data.user.email, name: data.user.name, nameBn: '', phone: data.user.phone, role: data.user.role })
+            login({ id: data.user.id, email: data.user.email, name: data.user.name, nameBn: data.user.name || '', phone: data.user.phone, role: data.user.role })
             sessionStorage.removeItem('sirsheba_login_id')
             
             // Redirect based on role

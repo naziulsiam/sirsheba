@@ -52,7 +52,7 @@ export async function middleware(request: NextRequest) {
     try {
         const verified = await jwtVerify(token, JWT_SECRET)
         const payload = verified.payload as {
-            userId: string
+            sub: string
             role: 'admin' | 'tutor'
             subscription?: 'active' | 'inactive' | 'trial'
         }

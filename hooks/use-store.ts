@@ -219,70 +219,8 @@ export function useSettings() {
   return { settings, updateSettings, updateReminders, isHydrated }
 }
 
-// Auth Store
-export function useAuth() {
-  const [session, setSession, isHydrated] = useLocalStorage<AuthSession | null>('sirsheba-auth', null)
-
-  const sendOTP = async (phone: string): Promise<boolean> => {
-    // In production: call API to send OTP
-    console.log(`Sending OTP to ${phone}`)
-    return true
-  }
-
-  const login = (phone: string, otp: string): boolean => {
-    // For demo: accept any 4-digit OTP
-    if (otp.length === 4 && /^\d{4}$/.test(otp)) {
-      const user: AuthUser = {
-        id: generateId(),
-        phone,
-        name: phone === '01700000000' ? 'Admin User' : 'Tutor User',
-        role: phone === '01700000000' ? 'admin' : 'tutor',
-        createdAt: new Date().toISOString(),
-      }
-      const newSession: AuthSession = {
-        user,
-        token: generateId(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      }
-      setSession(newSession)
-      return true
-    }
-    return false
-  }
-
-  const setupPin = (pin: string) => {
-    if (session && pin.length === 4) {
-      setSession({
-        ...session,
-        user: { ...session.user, pin }
-      })
-    }
-  }
-
-  const verifyPin = (pin: string): boolean => {
-    return session?.user.pin === pin
-  }
-
-  const enableBiometric = () => {
-    if (session) {
-      setSession({
-        ...session,
-        user: { ...session.user, biometricEnabled: true }
-      })
-    }
-  }
-
-  const logout = () => {
-    setSession(null)
-  }
-
-  const isAuthenticated = () => {
-    if (!session) return false
-    return new Date(session.expiresAt) > new Date()
-  }
-
-  return { session, sendOTP, login, logout, setupPin, verifyPin, enableBiometric, isAuthenticated, isHydrated }
-}
+// Re-export useAuth from auth-store for backwards compatibility
+export { useAuth, useAuthStore } from '@/store/auth-store'
 
 // Admin Store - no demo data
 export function useAdmin() {

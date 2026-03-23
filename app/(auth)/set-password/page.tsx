@@ -54,7 +54,7 @@ export default function SetPasswordPage() {
             })
             const data = await res.json()
             if (!res.ok) { setError(data.error); return }
-            login({ id: data.user.id, email: data.user.email, name: data.user.name, nameBn: '', phone: '' })
+            login({ id: data.user.id, email: data.user.email, name: data.user.name, nameBn: data.user.name || '', phone: data.user.phone || '' })
             sessionStorage.removeItem('sirsheba_reg_email')
             sessionStorage.removeItem('sirsheba_reg_name')
             router.push('/welcome')
