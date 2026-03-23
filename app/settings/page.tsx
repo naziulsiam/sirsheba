@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { useSettings, useStudents, useBatches, useFeePayments, useAttendance, useExams, useExamResults, useSMSLogs, useAuth } from '@/hooks/use-store'
+import { useSettings, useStudents, useBatches, useFeePayments, useAttendance, useExams, useExamResults, useSMSLogs, useAuth, useAuthStore } from '@/hooks/use-store'
 import {
   Settings,
   User,
@@ -24,6 +24,9 @@ import {
   Calendar,
   Clock,
   FileBarChart,
+  Crown,
+  Gift,
+  AlertTriangle,
 } from 'lucide-react'
 import { Switch } from '@/components/ui/switch'
 
@@ -37,7 +40,11 @@ export default function SettingsPage() {
   const { exams } = useExams()
   const { results } = useExamResults()
   const { logs } = useSMSLogs()
-  const { logout } = useAuth()
+  const { logout, user } = useAuth()
+  const { getTrialDaysRemaining } = useAuthStore()
+  
+  const trialDays = getTrialDaysRemaining()
+  const subscription = user?.subscription || 'inactive'
 
   const [formData, setFormData] = useState({
     name: settings.name,
@@ -198,6 +205,91 @@ export default function SettingsPage() {
             </Button>
           </Card>
         </form>
+
+        {/* Subscription / Trial Status */}
+        {subscription === 'inactive' ? (
+          <Card className="p-4 bg-muted/50">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                <Crown className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <h2 className="font-semibold">সাবস্ক্রিপশন নেই</h2>
+                <p className="text-xs text-muted-foreground">সব ফিচার ব্যবহার করতে সাবস্ক্রাইব করুন</p>
+              </div>
+            </div>
+            <Button 
+              variant="default" 
+              className="w-full"
+              onClick={() => router.push('/subscription')}
+            >
+              <Gift className="mr-2 h-4 w-4" />
+              ৩০ দিনের ফ্রি ট্রাইয়াল শুরু করুন
+            </Button>
+          </Card>
+        ) : (
+          <Card className={`p-4 ${subscription === 'trial' ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-amber-200' : 'bg-gradient-to-r from-primary/5 to-chart-2/5'}`}>
+            <div className="mb-3 flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${subscription === 'trial' ? 'bg-amber-500/20' : 'bg-primary/10'}`}>
+                {subscription === 'trial' ? (
+                  <Gift className="h-5 w-5 text-amber-600" />
+                ) : (
+                  <Crown className="h-5 w-5 text-primary" />
+                )}
+              </div>
+              <div>
+                <h2 className="font-semibold">
+                  {subscription === 'trial' ? 'ট্রাইয়াল চলছে' : 'প্রো সাবস্ক্রিপশন'}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {subscription === 'trial' ? '৩০ দিনের ফ্রি ট্রায়াল' : 'সক্রিয় সাবস্ক্রিপশন'}
+                </p>
+              </div>
+            </div>
+            
+            {subscription === 'trial' && trialDays !== null && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">বাকি দিন</span>
+                  <span className={`text-lg font-bold ${trialDays <= 3 ? 'text-destructive' : 'text-amber-600'}`}>
+                    {trialDays} দিন
+                  </span>
+                </div>
+                
+                {/* Progress bar */}
+                <div className="h-2 w-full rounded-full bg-amber-100 overflow-hidden">
+                  <div 
+                    className={`h-full rounded-full transition-all ${trialDays <= 3 ? 'bg-destructive' : 'bg-amber-500'}`}
+                    style={{ width: `${Math.max(0, Math.min(100, (trialDays / 30) * 100))}%` }}
+                  />
+                </div>
+                
+                {trialDays <= 3 && (
+                  <div className="flex items-center gap-2 text-xs text-destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span>ট্রাইয়াল শেষ হতে চলেছে! আপগ্রেড করুন।</span>
+                  </div>
+                )}
+                
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => router.push('/subscription')}
+                >
+                  <Crown className="mr-2 h-4 w-4" />
+                  {trialDays <= 3 ? 'আপগ্রেড করুন' : 'প্ল্যান দেখুন'}
+                </Button>
+              </div>
+            )}
+            
+            {subscription === 'active' && (
+              <div className="flex items-center gap-2 text-sm text-primary">
+                <Check className="h-4 w-4" />
+                <span>সব ফিচার সক্রিয় আছে</span>
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* Smart Reminders */}
         <Card className="p-4">

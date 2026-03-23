@@ -13,6 +13,8 @@ export interface AuthUser {
     pin?: string
     biometricEnabled?: boolean
     createdAt?: string
+    subscription?: 'active' | 'inactive' | 'trial' | 'expired'
+    subscriptionExpiry?: string
 }
 
 export interface AuthSession {
@@ -36,6 +38,7 @@ interface AuthState {
     verifyPin: (pin: string) => boolean
     enableBiometric: () => void
     isAuthenticatedCheck: () => boolean
+    getTrialDaysRemaining: () => number | null
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -92,6 +95,18 @@ export const useAuthStore = create<AuthState>()(
                 const state = get()
                 if (!state.session) return state.isAuthenticated
                 return new Date(state.session.expiresAt) > new Date()
+            },
+
+            getTrialDaysRemaining: () => {
+                const state = get()
+                if (!state.user?.subscriptionExpiry) return null
+                if (state.user.subscription !== 'trial') return null
+                
+                const expiry = new Date(state.user.subscriptionExpiry)
+                const now = new Date()
+                const diff = expiry.getTime() - now.getTime()
+                const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
+                return days > 0 ? days : 0
             },
         }),
         {
