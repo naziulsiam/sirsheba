@@ -19,6 +19,7 @@ const PUBLIC_PATHS = [
 // Role-based route access
 const ADMIN_ROUTES = ['/admin']
 const TUTOR_ROUTES = ['/', '/students', '/fees', '/attendance', '/sms', '/exams', '/batches', '/settings']
+const ALLOWED_WHILE_INACTIVE = ['/subscription', '/api/subscription']
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
@@ -50,12 +51,12 @@ export async function middleware(request: NextRequest) {
 
     try {
         const verified = await jwtVerify(token, JWT_SECRET)
-        const payload = verified.payload as { 
+        const payload = verified.payload as {
             userId: string
             role: 'admin' | 'tutor'
             subscription?: 'active' | 'inactive' | 'trial'
         }
-        
+
         const userRole = payload.role
         const subscription = payload.subscription || 'inactive'
 
@@ -74,13 +75,13 @@ export async function middleware(request: NextRequest) {
                 // Admins can access tutor routes too
                 return NextResponse.next()
             }
-            
+
             // Check subscription for tutors
-            if (subscription === 'inactive' && pathname !== '/subscription') {
+            if (subscription === 'inactive' && !ALLOWED_WHILE_INACTIVE.some(route => pathname.startsWith(route))) {
                 // Redirect to subscription page if no active subscription
                 return NextResponse.redirect(new URL('/subscription', request.url))
             }
-            
+
             return NextResponse.next()
         }
 
