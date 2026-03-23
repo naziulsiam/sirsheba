@@ -12,8 +12,13 @@ const PUBLIC_PATHS = [
     '/set-password',
     '/welcome',
     '/forgot-pin',
+    '/auth',
     '/api/auth',
 ]
+
+// Role-based route access
+const ADMIN_ROUTES = ['/admin']
+const TUTOR_ROUTES = ['/', '/students', '/fees', '/attendance', '/sms', '/exams', '/batches', '/settings']
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
@@ -44,7 +49,41 @@ export async function middleware(request: NextRequest) {
     }
 
     try {
-        await jwtVerify(token, JWT_SECRET)
+        const verified = await jwtVerify(token, JWT_SECRET)
+        const payload = verified.payload as { 
+            userId: string
+            role: 'admin' | 'tutor'
+            subscription?: 'active' | 'inactive' | 'trial'
+        }
+        
+        const userRole = payload.role
+        const subscription = payload.subscription || 'inactive'
+
+        // Check admin routes
+        if (ADMIN_ROUTES.some(route => pathname.startsWith(route))) {
+            if (userRole !== 'admin') {
+                // Tutors trying to access admin routes → redirect to tutor dashboard
+                return NextResponse.redirect(new URL('/', request.url))
+            }
+            return NextResponse.next()
+        }
+
+        // Check tutor routes - require active subscription
+        if (TUTOR_ROUTES.some(route => pathname.startsWith(route))) {
+            if (userRole === 'admin') {
+                // Admins can access tutor routes too
+                return NextResponse.next()
+            }
+            
+            // Check subscription for tutors
+            if (subscription === 'inactive' && pathname !== '/subscription') {
+                // Redirect to subscription page if no active subscription
+                return NextResponse.redirect(new URL('/subscription', request.url))
+            }
+            
+            return NextResponse.next()
+        }
+
         return NextResponse.next()
     } catch {
         const loginUrl = new URL('/login', request.url)

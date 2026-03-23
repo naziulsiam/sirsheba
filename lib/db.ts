@@ -13,6 +13,11 @@ export interface TutorRecord {
     plan_type: 'free' | 'basic' | 'pro'
     role: 'tutor' | 'admin'
     is_active: boolean
+    // Subscription fields
+    subscription_status?: 'active' | 'inactive' | 'trial' | 'expired'
+    subscription_expiry?: string
+    trial_start?: string
+    trial_end?: string
     created_at: string
     updated_at: string
 }
@@ -129,5 +134,80 @@ export const db = {
         const updated = { ...existing, ...updates, updated_at: new Date().toISOString() }
         memoryStore.set(id, updated)
         return updated
+    },
+
+    // Subscription helpers
+    async checkSubscriptionStatus(tutorId: string): Promise<{
+        status: 'active' | 'inactive' | 'trial' | 'expired'
+        expiryDate?: string
+        daysRemaining?: number
+    }> {
+        const tutor = await this.findTutorById(tutorId)
+        if (!tutor) return { status: 'inactive' }
+
+        // Admin always has active subscription
+        if (tutor.role === 'admin') {
+            return { status: 'active' }
+        }
+
+        // Free plan is always active
+        if (tutor.plan_type === 'free') {
+            return { status: 'active' }
+        }
+
+        // Check explicit subscription status
+        if (tutor.subscription_status) {
+            if (tutor.subscription_status === 'trial' && tutor.trial_end) {
+                const trialEnd = new Date(tutor.trial_end)
+                const now = new Date()
+                if (now > trialEnd) {
+                    return { status: 'expired', expiryDate: tutor.trial_end }
+                }
+                const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                return { status: 'trial', expiryDate: tutor.trial_end, daysRemaining }
+            }
+            
+            if (tutor.subscription_expiry) {
+                const expiry = new Date(tutor.subscription_expiry)
+                const now = new Date()
+                if (now > expiry) {
+                    return { status: 'expired', expiryDate: tutor.subscription_expiry }
+                }
+                const daysRemaining = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                return { 
+                    status: tutor.subscription_status, 
+                    expiryDate: tutor.subscription_expiry,
+                    daysRemaining 
+                }
+            }
+            
+            return { status: tutor.subscription_status }
+        }
+
+        // Default: inactive
+        return { status: 'inactive' }
+    },
+
+    async activateSubscription(tutorId: string, plan: 'basic' | 'pro', durationDays: number = 30): Promise<void> {
+        const expiryDate = new Date()
+        expiryDate.setDate(expiryDate.getDate() + durationDays)
+        
+        await this.updateTutor(tutorId, {
+            plan_type: plan,
+            subscription_status: 'active',
+            subscription_expiry: expiryDate.toISOString(),
+        })
+    },
+
+    async startTrial(tutorId: string, trialDays: number = 14): Promise<void> {
+        const now = new Date()
+        const trialEnd = new Date()
+        trialEnd.setDate(trialEnd.getDate() + trialDays)
+        
+        await this.updateTutor(tutorId, {
+            subscription_status: 'trial',
+            trial_start: now.toISOString(),
+            trial_end: trialEnd.toISOString(),
+        })
     },
 }

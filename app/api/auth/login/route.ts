@@ -44,12 +44,35 @@ export async function POST(req: NextRequest) {
             if (!authenticated) return NextResponse.json({ error: 'পাসওয়ার্ড ভুল' }, { status: 401 })
         }
 
-        const token = await signToken({ sub: tutor.id, email: tutor.email, name: tutor.full_name })
+        // Determine subscription status
+        let subscription: 'active' | 'inactive' | 'trial' | 'expired' = 'inactive'
+        if (tutor.subscription_status) {
+            subscription = tutor.subscription_status
+        } else if (tutor.role === 'admin') {
+            subscription = 'active' // Admins always have active subscription
+        }
+
+        const token = await signToken({ 
+            sub: tutor.id, 
+            email: tutor.email, 
+            name: tutor.full_name,
+            role: tutor.role || 'tutor',
+            subscription,
+            subscriptionExpiry: tutor.subscription_expiry,
+        })
         await setSessionCookie(token)
 
         return NextResponse.json({
             success: true,
-            user: { id: tutor.id, name: tutor.full_name, email: tutor.email, phone: tutor.phone, role: tutor.role },
+            user: { 
+                id: tutor.id, 
+                name: tutor.full_name, 
+                email: tutor.email, 
+                phone: tutor.phone, 
+                role: tutor.role || 'tutor',
+                subscription,
+                subscriptionExpiry: tutor.subscription_expiry,
+            },
         })
     } catch (err) {
         console.error('Login error:', err)

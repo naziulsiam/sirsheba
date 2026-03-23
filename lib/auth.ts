@@ -16,6 +16,9 @@ export interface JWTPayload {
     email: string
     name: string
     nameBn?: string
+    role: 'admin' | 'tutor'
+    subscription: 'active' | 'inactive' | 'trial' | 'expired'
+    subscriptionExpiry?: string
     iat?: number
     exp?: number
 }

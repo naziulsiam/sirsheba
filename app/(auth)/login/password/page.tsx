@@ -38,10 +38,18 @@ function LoginPasswordContent() {
             })
             const data = await res.json()
             if (!res.ok) { setError(data.error); return }
-            login({ id: data.user.id, email: data.user.email, name: data.user.name, nameBn: '', phone: data.user.phone })
+            login({ id: data.user.id, email: data.user.email, name: data.user.name, nameBn: '', phone: data.user.phone, role: data.user.role })
             sessionStorage.removeItem('sirsheba_login_id')
-            const from = searchParams.get('from') || '/'
-            router.push(from)
+            
+            // Redirect based on role
+            const from = searchParams.get('from')
+            if (from) {
+                router.push(from)
+            } else if (data.user.role === 'admin') {
+                router.push('/admin')
+            } else {
+                router.push('/')
+            }
         } catch {
             setError('সংযোগ ব্যর্থ')
         } finally {
