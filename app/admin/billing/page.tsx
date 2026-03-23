@@ -16,7 +16,8 @@ import {
   Plus,
   X,
   Check,
-  Copy
+  Copy,
+  Trash2
 } from 'lucide-react'
 import { 
   LineChart, 
@@ -25,27 +26,32 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  AreaChart,
+  Area
 } from 'recharts'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
-
-const mockMRRData = [
-  { month: 'Oct', mrr: 45000 },
-  { month: 'Nov', mrr: 52000 },
-  { month: 'Dec', mrr: 58000 },
-  { month: 'Jan', mrr: 65000 },
-  { month: 'Feb', mrr: 72000 },
-  { month: 'Mar', mrr: 89000 },
-]
+import { Label } from '@/components/ui/label'
 
 export default function BillingPage() {
-  const { getMetrics, getFailedPayments, invoices, promoCodes, addPromoCode } = useAdmin()
+  const { 
+    getMetrics, 
+    getFailedPayments, 
+    invoices, 
+    promoCodes, 
+    addPromoCode, 
+    deletePromoCode,
+    addInvoice,
+    revenueData,
+    addRevenueEntry,
+    updateInvoice
+  } = useAdmin()
+  
   const metrics = getMetrics()
   const failedPayments = getFailedPayments()
   
@@ -56,6 +62,7 @@ export default function BillingPage() {
     usageLimit: 100,
   })
   const [showAddPromo, setShowAddPromo] = useState(false)
+  const [retryingPayment, setRetryingPayment] = useState<string | null>(null)
 
   const handleAddPromo = () => {
     if (newPromoCode.code && newPromoCode.validUntil) {
@@ -67,6 +74,41 @@ export default function BillingPage() {
       })
       setNewPromoCode({ code: '', discount: 20, validUntil: '', usageLimit: 100 })
       setShowAddPromo(false)
+    }
+  }
+
+  const handleRetryPayment = async (paymentId: string) => {
+    setRetryingPayment(paymentId)
+    // Simulate retry
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    setRetryingPayment(null)
+    alert('পেমেন্ট রিট্রাই করা হয়েছে')
+  }
+
+  const handleDownloadInvoice = (invoice: typeof invoices[0]) => {
+    // Create a simple PDF-like text file for demo
+    const content = `
+ইনভয়েস
+-------
+ইনভয়েস নং: ${invoice.id}
+টিউটর: ${invoice.tutorName}
+পরিমাণ: ${formatTaka(invoice.amount)}
+তারিখ: ${new Date(invoice.createdAt).toLocaleDateString('bn-BD')}
+স্ট্যাটাস: ${invoice.status === 'paid' ? 'পরিশোধিত' : invoice.status === 'pending' ? 'অপেক্ষমাণ' : 'ব্যর্থ'}
+    `.trim()
+    
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `invoice-${invoice.id}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleDeletePromo = (id: string) => {
+    if (confirm('আপনি কি নিশ্চিত এই প্রোমো কোড মুছতে চান?')) {
+      deletePromoCode(id)
     }
   }
 
@@ -107,24 +149,26 @@ export default function BillingPage() {
             <div className="flex items-center gap-2 mt-2">
               <Badge className="bg-green-100 text-green-700">
                 <TrendingUp className="w-3 h-3 mr-1" />
-                +১২%
+                সক্রিয়
               </Badge>
-              <span className="text-sm text-muted-foreground">গত মাস থেকে</span>
+              <span className="text-sm text-muted-foreground">{toBanglaNumber(metrics.activeTutors)} জন টিউটর</span>
             </div>
           </div>
-          <div className="h-[120px] w-full lg:w-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mockMRRData}>
-                <Line 
-                  type="monotone" 
-                  dataKey="mrr" 
-                  stroke="#059669" 
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {revenueData.length > 0 && (
+            <div className="h-[120px] w-full lg:w-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData}>
+                  <defs>
+                    <linearGradient id="miniRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#059669" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#059669" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="revenue" stroke="#059669" fill="url(#miniRevenue)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       </Card>
 
@@ -150,8 +194,13 @@ export default function BillingPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="font-bold">{formatTaka(payment.amount)}</span>
-                <Button size="sm" variant="outline">
-                  <RefreshCw className="w-4 h-4 mr-1" />
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => handleRetryPayment(payment.id)}
+                  disabled={retryingPayment === payment.id}
+                >
+                  <RefreshCw className={`w-4 h-4 mr-1 ${retryingPayment === payment.id ? 'animate-spin' : ''}`} />
                   রিট্রাই
                 </Button>
               </div>
@@ -172,7 +221,14 @@ export default function BillingPage() {
               <FileText className="w-5 h-5 text-primary" />
               <h3 className="font-semibold">সাম্প্রতিক ইনভয়েস</h3>
             </div>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                // Bulk download
+                invoices.forEach(inv => handleDownloadInvoice(inv))
+              }}
+            >
               <Download className="w-4 h-4 mr-1" />
               সব ডাউনলোড
             </Button>
@@ -189,12 +245,19 @@ export default function BillingPage() {
                 <div className="flex items-center gap-3">
                   <span className="font-medium">{formatTaka(invoice.amount)}</span>
                   {getInvoiceStatusBadge(invoice.status)}
-                  <Button variant="ghost" size="icon">
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleDownloadInvoice(invoice)}
+                  >
                     <Download className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             ))}
+            {invoices.length === 0 && (
+              <p className="text-center text-muted-foreground py-4">কোনো ইনভয়েস নেই</p>
+            )}
           </div>
         </Card>
 
@@ -206,19 +269,17 @@ export default function BillingPage() {
               <h3 className="font-semibold">প্রোমো কোড</h3>
             </div>
             <Dialog open={showAddPromo} onOpenChange={setShowAddPromo}>
-              <DialogTrigger asChild>
-                <Button size="sm">
-                  <Plus className="w-4 h-4 mr-1" />
-                  নতুন
-                </Button>
-              </DialogTrigger>
+              <Button size="sm" onClick={() => setShowAddPromo(true)}>
+                <Plus className="w-4 h-4 mr-1" />
+                নতুন
+              </Button>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>নতুন প্রোমো কোড</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div>
-                    <label className="text-sm font-medium mb-1 block">কোড</label>
+                    <Label>কোড</Label>
                     <Input
                       value={newPromoCode.code}
                       onChange={(e) => setNewPromoCode({ ...newPromoCode, code: e.target.value.toUpperCase() })}
@@ -226,15 +287,15 @@ export default function BillingPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-1 block">ছাড় (%)</label>
+                    <Label>ছাড় (%)</Label>
                     <Input
                       type="number"
                       value={newPromoCode.discount}
-                      onChange={(e) => setNewPromoCode({ ...newPromoCode, discount: parseInt(e.target.value) })}
+                      onChange={(e) => setNewPromoCode({ ...newPromoCode, discount: parseInt(e.target.value) || 0 })}
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-1 block">মেয়াদ শেষ</label>
+                    <Label>মেয়াদ শেষ</Label>
                     <Input
                       type="date"
                       value={newPromoCode.validUntil}
@@ -242,11 +303,11 @@ export default function BillingPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-1 block">ব্যবহার সীমা</label>
+                    <Label>ব্যবহার সীমা</Label>
                     <Input
                       type="number"
                       value={newPromoCode.usageLimit}
-                      onChange={(e) => setNewPromoCode({ ...newPromoCode, usageLimit: parseInt(e.target.value) })}
+                      onChange={(e) => setNewPromoCode({ ...newPromoCode, usageLimit: parseInt(e.target.value) || 0 })}
                     />
                   </div>
                   <Button onClick={handleAddPromo} className="w-full">
@@ -271,39 +332,59 @@ export default function BillingPage() {
                     মেয়াদ: {new Date(promo.validUntil).toLocaleDateString('bn-BD')}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">
-                    {toBanglaNumber(promo.usageCount)}/{toBanglaNumber(promo.usageLimit)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">ব্যবহার</p>
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <p className="text-sm font-medium">
+                      {toBanglaNumber(promo.usageCount)}/{toBanglaNumber(promo.usageLimit)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">ব্যবহার</p>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleDeletePromo(promo.id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
                 </div>
               </div>
             ))}
+            {promoCodes.length === 0 && (
+              <p className="text-center text-muted-foreground py-4">কোনো প্রোমো কোড নেই</p>
+            )}
           </div>
         </Card>
       </div>
 
       {/* Annual Revenue Projection */}
-      <Card className="p-5">
-        <h3 className="font-semibold mb-4">বার্ষিক রাজস্ব প্রজেকশন</h3>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={mockMRRData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="month" />
-              <YAxis tickFormatter={(v) => `৳${v/1000}k`} />
-              <Tooltip formatter={(v: number) => [`৳${v.toLocaleString()}`, 'MRR']} />
-              <Line 
-                type="monotone" 
-                dataKey="mrr" 
-                stroke="#059669" 
-                strokeWidth={2}
-                dot={{ fill: '#059669' }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+      {revenueData.length > 0 && (
+        <Card className="p-5">
+          <h3 className="font-semibold mb-4">রাজস্ব ট্রেন্ড</h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={revenueData}>
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(v) => `৳${v/1000}k`} />
+                <Tooltip formatter={(v: number) => [`৳${v.toLocaleString()}`, 'রাজস্ব']} />
+                <Area 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#3b82f6" 
+                  fill="url(#revenueGradient)" 
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
     </div>
   )
 }

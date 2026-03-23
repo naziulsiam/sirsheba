@@ -2,6 +2,7 @@
 
 import { use } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -19,7 +20,8 @@ import {
   TrendingUp,
   Users,
   CreditCard,
-  Calendar
+  Calendar,
+  Trash2
 } from 'lucide-react'
 import { 
   LineChart, 
@@ -33,27 +35,10 @@ import {
   Bar
 } from 'recharts'
 
-const mockRevenueData = [
-  { month: 'Oct', revenue: 15000 },
-  { month: 'Nov', revenue: 18000 },
-  { month: 'Dec', revenue: 22000 },
-  { month: 'Jan', revenue: 25000 },
-  { month: 'Feb', revenue: 28000 },
-  { month: 'Mar', revenue: 32000 },
-]
-
-const mockSMSData = [
-  { month: 'Oct', count: 150 },
-  { month: 'Nov', count: 180 },
-  { month: 'Dec', count: 220 },
-  { month: 'Jan', count: 250 },
-  { month: 'Feb', count: 280 },
-  { month: 'Mar', count: 320 },
-]
-
 export default function TutorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { tutors, updateTutorStatus, impersonateTutor } = useAdmin()
+  const router = useRouter()
+  const { tutors, updateTutorStatus, deleteTutor } = useAdmin()
   
   const tutor = tutors.find(t => t.id === id)
 
@@ -72,10 +57,56 @@ export default function TutorDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   const handleImpersonate = () => {
-    impersonateTutor(tutor.id)
-    // In a real app, this would set a temporary session
+    // Store impersonation in session storage for the tutor app to pick up
+    sessionStorage.setItem('impersonating_tutor', JSON.stringify(tutor))
     window.open('/', '_blank')
   }
+
+  const handleSendEmail = () => {
+    window.location.href = `mailto:${tutor.phone}@example.com`
+  }
+
+  const handleSendSMS = () => {
+    const message = prompt(`মেসেজ লিখুন ${tutor.name} এর জন্য:`)
+    if (message) {
+      alert(`SMS পাঠানো হয়েছে: ${tutor.phone}`)
+    }
+  }
+
+  const handleCall = () => {
+    window.location.href = `tel:${tutor.phone}`
+  }
+
+  const handleDelete = () => {
+    if (confirm(`আপনি কি নিশ্চিত "${tutor.name}" মুছতে চান?`)) {
+      deleteTutor(tutor.id)
+      router.push('/admin/tutors')
+    }
+  }
+
+  const handleStatusToggle = () => {
+    const newStatus = tutor.status === 'active' ? 'suspended' : 'active'
+    updateTutorStatus(tutor.id, newStatus)
+  }
+
+  // Mock data for charts - in real app would come from tutor's actual data
+  const mockRevenueData = [
+    { month: 'Oct', revenue: Math.floor(tutor.revenue / 6) },
+    { month: 'Nov', revenue: Math.floor(tutor.revenue / 5) },
+    { month: 'Dec', revenue: Math.floor(tutor.revenue / 4) },
+    { month: 'Jan', revenue: Math.floor(tutor.revenue / 3) },
+    { month: 'Feb', revenue: Math.floor(tutor.revenue / 2) },
+    { month: 'Mar', revenue: tutor.revenue },
+  ]
+
+  const mockSMSData = [
+    { month: 'Oct', count: Math.floor(tutor.smsSent / 6) },
+    { month: 'Nov', count: Math.floor(tutor.smsSent / 5) },
+    { month: 'Dec', count: Math.floor(tutor.smsSent / 4) },
+    { month: 'Jan', count: Math.floor(tutor.smsSent / 3) },
+    { month: 'Feb', count: Math.floor(tutor.smsSent / 2) },
+    { month: 'Mar', count: tutor.smsSent },
+  ]
 
   return (
     <div className="space-y-6">
@@ -96,7 +127,7 @@ export default function TutorDetailPage({ params }: { params: Promise<{ id: stri
           </Button>
           <Button 
             variant={tutor.status === 'active' ? 'destructive' : 'default'}
-            onClick={() => updateTutorStatus(tutor.id, tutor.status === 'active' ? 'suspended' : 'active')}
+            onClick={handleStatusToggle}
           >
             {tutor.status === 'active' ? (
               <>
@@ -146,10 +177,13 @@ export default function TutorDetailPage({ params }: { params: Promise<{ id: stri
               </Badge>
             </div>
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
+              <button 
+                onClick={handleCall}
+                className="flex items-center gap-1 hover:text-primary"
+              >
                 <Phone className="w-4 h-4" />
                 {tutor.phone}
-              </div>
+              </button>
               <div className="flex items-center gap-1">
                 <Calendar className="w-4 h-4" />
                 যোগদান: {new Date(tutor.joinedAt).toLocaleDateString('bn-BD')}
@@ -157,13 +191,17 @@ export default function TutorDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleSendEmail}>
               <Mail className="w-4 h-4 mr-2" />
               ইমেইল পাঠান
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleSendSMS}>
               <MessageSquare className="w-4 h-4 mr-2" />
               SMS পাঠান
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleCall}>
+              <Phone className="w-4 h-4 mr-2" />
+              কল করুন
             </Button>
           </div>
         </div>
@@ -218,45 +256,45 @@ export default function TutorDetailPage({ params }: { params: Promise<{ id: stri
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
-        <Card className="p-5">
-          <h3 className="font-semibold mb-4">রাজস্ব ট্রেন্ড</h3>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mockRevenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `৳${v/1000}k`} />
-                <Tooltip formatter={(v: number) => [`৳${v.toLocaleString()}`, 'রাজস্ব']} />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#059669" 
-                  strokeWidth={2}
-                  dot={{ fill: '#059669' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
+      {tutor.revenue > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="p-5">
+            <h3 className="font-semibold mb-4">রাজস্ব ট্রেন্ড</h3>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={mockRevenueData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `৳${v/1000}k`} />
+                  <Tooltip formatter={(v: number) => [`৳${v.toLocaleString()}`, 'রাজস্ব']} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#059669" 
+                    strokeWidth={2}
+                    dot={{ fill: '#059669' }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
 
-        {/* SMS Activity */}
-        <Card className="p-5">
-          <h3 className="font-semibold mb-4">SMS কার্যকলাপ</h3>
-          <div className="h-[250px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockSMSData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(v: number) => [v, 'SMS সংখ্যা']} />
-                <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
+          <Card className="p-5">
+            <h3 className="font-semibold mb-4">SMS কার্যকলাপ</h3>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mockSMSData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip formatter={(v: number) => [v, 'SMS সংখ্যা']} />
+                  <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Additional Info */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -285,17 +323,25 @@ export default function TutorDetailPage({ params }: { params: Promise<{ id: stri
         <Card className="p-5">
           <h3 className="font-semibold mb-4">দ্রুত কাজ</h3>
           <div className="space-y-2">
-            <Button variant="outline" className="w-full justify-start">
-              <CreditCard className="w-4 h-4 mr-2" />
-              পেমেন্ট হিস্টরি দেখুন
-            </Button>
-            <Button variant="outline" className="w-full justify-start">
+            <Button variant="outline" className="w-full justify-start" onClick={handleSendSMS}>
               <MessageSquare className="w-4 h-4 mr-2" />
-              SMS লগ দেখুন
+              SMS পাঠান
             </Button>
-            <Button variant="outline" className="w-full justify-start">
-              <Users className="w-4 h-4 mr-2" />
-              শিক্ষার্থী তালিকা দেখুন
+            <Button variant="outline" className="w-full justify-start" onClick={handleCall}>
+              <Phone className="w-4 h-4 mr-2" />
+              কল করুন
+            </Button>
+            <Button variant="outline" className="w-full justify-start" onClick={handleSendEmail}>
+              <Mail className="w-4 h-4 mr-2" />
+              ইমেইল পাঠান
+            </Button>
+            <Button 
+              variant="destructive" 
+              className="w-full justify-start"
+              onClick={handleDelete}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              টিউটর মুছুন
             </Button>
           </div>
         </Card>

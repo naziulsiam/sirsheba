@@ -25,13 +25,13 @@ export function DashboardStats() {
 
   const todaysPayments = getTodaysPayments()
   const todaysTotal = todaysPayments.reduce((sum, p) => sum + p.amount, 0)
-  
+
   const today = new Date().toISOString().split('T')[0]
   const todaysAttendance = getDateAttendance(today)
   const activeStudents = students.filter(s => s.active)
   const presentCount = todaysAttendance.filter(a => a.status === 'present').length
-  const attendancePercent = activeStudents.length > 0 
-    ? Math.round((presentCount / activeStudents.length) * 100) 
+  const attendancePercent = activeStudents.length > 0
+    ? Math.round((presentCount / activeStudents.length) * 100)
     : 0
 
   // Calculate pending fees - students who haven't paid this month
@@ -92,24 +92,18 @@ export function DashboardStats() {
       {stats.map((stat) => {
         const Icon = stat.icon
         return (
-          <Card key={stat.label} className={`${stat.bgColor} border-0 p-3`}>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-xs font-medium text-muted-foreground">
-                  {stat.label}
-                </p>
-                <p className={`text-xl font-bold ${stat.textColor}`}>
-                  {stat.value}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  {stat.subtext}
-                </p>
-              </div>
-              <div className={`rounded-full p-2 ${stat.bgColor}`}>
-                <Icon className={`h-4 w-4 ${stat.iconColor}`} />
+          <div key={stat.label} className={`${stat.bgColor} rounded-2xl shadow-card p-4 border border-border/40`}>
+            <div className="flex items-start justify-between mb-2">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${stat.bgColor}`}>
+                <Icon className={`h-5 w-5 ${stat.iconColor}`} />
               </div>
             </div>
-          </Card>
+            <p className={`text-2xl font-bold tracking-tight ${stat.textColor}`}>
+              {stat.value}
+            </p>
+            <p className="text-xs font-medium text-muted-foreground mt-0.5">{stat.label}</p>
+            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{stat.subtext}</p>
+          </div>
         )
       })}
     </div>

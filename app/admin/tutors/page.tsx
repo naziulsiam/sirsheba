@@ -21,7 +21,9 @@ import {
   UserCog,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  Plus,
+  Trash2
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -29,17 +31,32 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 
 type TutorStatus = 'all' | 'active' | 'suspended' | 'inactive'
 type TutorPlan = 'all' | 'free' | 'basic' | 'pro'
 
 export default function TutorsPage() {
-  const { tutors, updateTutorStatus } = useAdmin()
+  const { tutors, updateTutorStatus, addTutor, deleteTutor } = useAdmin()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<TutorStatus>('all')
   const [planFilter, setPlanFilter] = useState<TutorPlan>('all')
   const [selectedTutors, setSelectedTutors] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
+  const [showAddDialog, setShowAddDialog] = useState(false)
+  const [newTutor, setNewTutor] = useState({
+    name: '',
+    phone: '',
+    plan: 'basic' as const,
+    monthlyFee: 499,
+  })
   const itemsPerPage = 10
 
   // Filter tutors
@@ -99,6 +116,37 @@ export default function TutorsPage() {
     a.href = url
     a.download = `tutors-${new Date().toISOString().split('T')[0]}.csv`
     a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleAddTutor = () => {
+    if (newTutor.name && newTutor.phone) {
+      addTutor({
+        ...newTutor,
+        planExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        studentCount: 0,
+        lastActive: new Date().toISOString(),
+        status: 'active',
+        revenue: 0,
+        smsSent: 0,
+        joinedAt: new Date().toISOString(),
+      })
+      setNewTutor({ name: '', phone: '', plan: 'basic', monthlyFee: 499 })
+      setShowAddDialog(false)
+    }
+  }
+
+  const handleDelete = (id: string) => {
+    if (confirm('আপনি কি নিশ্চিত এই টিউটর মুছতে চান?')) {
+      deleteTutor(id)
+    }
+  }
+
+  const handleSendMessage = (tutor: typeof tutors[0]) => {
+    const message = prompt(`মেসেজ লিখুন ${tutor.name} এর জন্য:`)
+    if (message) {
+      alert(`মেসেজ পাঠানো হয়েছে: ${tutor.phone}`)
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -150,13 +198,62 @@ export default function TutorsPage() {
             <Download className="w-4 h-4 mr-2" />
             এক্সপোর্ট CSV
           </Button>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                টিউটর যোগ
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>নতুন টিউটর যোগ করুন</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div>
+                  <Label>নাম</Label>
+                  <Input
+                    value={newTutor.name}
+                    onChange={(e) => setNewTutor({ ...newTutor, name: e.target.value })}
+                    placeholder="টিউটরের নাম"
+                  />
+                </div>
+                <div>
+                  <Label>ফোন</Label>
+                  <Input
+                    value={newTutor.phone}
+                    onChange={(e) => setNewTutor({ ...newTutor, phone: e.target.value })}
+                    placeholder="01XXXXXXXXX"
+                  />
+                </div>
+                <div>
+                  <Label>প্ল্যান</Label>
+                  <select
+                    value={newTutor.plan}
+                    onChange={(e) => setNewTutor({ 
+                      ...newTutor, 
+                      plan: e.target.value as typeof newTutor.plan,
+                      monthlyFee: e.target.value === 'free' ? 0 : e.target.value === 'basic' ? 499 : 999
+                    })}
+                    className="w-full h-10 rounded-md border border-input bg-background px-3"
+                  >
+                    <option value="free">ফ্রি (৳০)</option>
+                    <option value="basic">বেসিক (৳৪৯৯)</option>
+                    <option value="pro">প্রো (৳৯৯৯)</option>
+                  </select>
+                </div>
+                <Button onClick={handleAddTutor} className="w-full">
+                  যোগ করুন
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
       {/* Filters */}
       <Card className="p-4">
         <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -175,7 +272,6 @@ export default function TutorsPage() {
             )}
           </div>
 
-          {/* Status Filter */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as TutorStatus)}
@@ -187,7 +283,6 @@ export default function TutorsPage() {
             <option value="inactive">নিষ্ক্রিয়</option>
           </select>
 
-          {/* Plan Filter */}
           <select
             value={planFilter}
             onChange={(e) => setPlanFilter(e.target.value as TutorPlan)}
@@ -200,7 +295,6 @@ export default function TutorsPage() {
           </select>
         </div>
 
-        {/* Bulk Actions */}
         {selectedTutors.length > 0 && (
           <div className="flex items-center gap-2 mt-4 pt-4 border-t">
             <span className="text-sm text-muted-foreground">
@@ -210,9 +304,9 @@ export default function TutorsPage() {
               <Download className="w-4 h-4 mr-2" />
               এক্সপোর্ট
             </Button>
-            <Button variant="outline" size="sm">
-              <Mail className="w-4 h-4 mr-2" />
-              মেসেজ পাঠান
+            <Button variant="outline" size="sm" onClick={() => setSelectedTutors([])}>
+              <X className="w-4 h-4 mr-2" />
+              বাতিল
             </Button>
           </div>
         )}
@@ -288,11 +382,7 @@ export default function TutorsPage() {
                             দেখুন
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <UserCog className="w-4 h-4 mr-2" />
-                          এডিট করুন
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleSendMessage(tutor)}>
                           <Mail className="w-4 h-4 mr-2" />
                           মেসেজ পাঠান
                         </DropdownMenuItem>
@@ -312,6 +402,13 @@ export default function TutorsPage() {
                             সক্রিয় করুন
                           </DropdownMenuItem>
                         )}
+                        <DropdownMenuItem 
+                          onClick={() => handleDelete(tutor.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          মুছুন
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
@@ -321,15 +418,21 @@ export default function TutorsPage() {
           </table>
         </div>
 
-        {/* Empty State */}
         {paginatedTutors.length === 0 && (
           <div className="p-12 text-center">
             <Filter className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">কোনো টিউটর পাওয়া যায়নি</p>
+            <p className="text-muted-foreground mb-4">
+              {tutors.length === 0 ? 'কোনো টিউটর যোগ করা হয়নি' : 'কোনো টিউটর পাওয়া যায়নি'}
+            </p>
+            {tutors.length === 0 && (
+              <Button onClick={() => setShowAddDialog(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                টিউটর যোগ করুন
+              </Button>
+            )}
           </div>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between p-4 border-t">
             <p className="text-sm text-muted-foreground">

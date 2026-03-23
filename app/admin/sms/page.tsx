@@ -1,14 +1,57 @@
 'use client'
 
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
-import { MessageSquare, TrendingUp, Users, CreditCard } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useAdmin } from '@/hooks/use-store'
+import { 
+  MessageSquare, 
+  TrendingUp, 
+  Users, 
+  CreditCard,
+  Send,
+  Plus
+} from 'lucide-react'
+import { toBanglaNumber, formatTaka } from '@/lib/types'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export default function AdminSMSPage() {
+  const { tutors, getMetrics } = useAdmin()
+  const metrics = getMetrics()
+  const [showSendDialog, setShowSendDialog] = useState(false)
+  const [message, setMessage] = useState('')
+  const [sending, setSending] = useState(false)
+
+  const handleSendBulkSMS = async () => {
+    if (!message.trim()) return
+    
+    setSending(true)
+    // Simulate sending
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    setSending(false)
+    setShowSendDialog(false)
+    setMessage('')
+    alert('বাল্ক SMS পাঠানো হয়েছে!')
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">SMS ব্যবস্থাপনা</h1>
-        <p className="text-muted-foreground">সিস্টেমের সব SMS কার্যকলাপ</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">SMS ব্যবস্থাপনা</h1>
+          <p className="text-muted-foreground">সিস্টেমের সব SMS কার্যকলাপ</p>
+        </div>
+        <Button onClick={() => setShowSendDialog(true)}>
+          <Send className="w-4 h-4 mr-2" />
+          বাল্ক SMS পাঠান
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -18,8 +61,8 @@ export default function AdminSMSPage() {
               <MessageSquare className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">আজকের SMS</p>
-              <p className="text-2xl font-bold">১,২৩৪</p>
+              <p className="text-sm text-muted-foreground">মোট SMS</p>
+              <p className="text-2xl font-bold">{toBanglaNumber(metrics.smsSent)}</p>
             </div>
           </div>
         </Card>
@@ -29,8 +72,8 @@ export default function AdminSMSPage() {
               <TrendingUp className="w-5 h-5 text-chart-2" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">মোট এই মাসে</p>
-              <p className="text-2xl font-bold">৪৫,৬৭৮</p>
+              <p className="text-sm text-muted-foreground">আজকের SMS</p>
+              <p className="text-2xl font-bold">০</p>
             </div>
           </div>
         </Card>
@@ -41,7 +84,7 @@ export default function AdminSMSPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">সক্রিয় টিউটর</p>
-              <p className="text-2xl font-bold">৮৯</p>
+              <p className="text-2xl font-bold">{toBanglaNumber(metrics.activeTutors)}</p>
             </div>
           </div>
         </Card>
@@ -52,16 +95,53 @@ export default function AdminSMSPage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">SMS খরচ</p>
-              <p className="text-2xl font-bold">৳১২,৩৪৫</p>
+              <p className="text-2xl font-bold">{formatTaka(Math.floor(metrics.smsSent * 0.5))}</p>
             </div>
           </div>
         </Card>
       </div>
 
-      <Card className="p-12 text-center">
-        <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <p className="text-muted-foreground">SMS লগ এখানে দেখা যাবে</p>
+      {/* SMS History */}
+      <Card className="p-5">
+        <h3 className="font-semibold mb-4">সাম্প্রতিক SMS</h3>
+        <p className="text-center text-muted-foreground py-8">কোনো SMS রেকর্ড নেই</p>
       </Card>
+
+      {/* Bulk SMS Dialog */}
+      <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>বাল্ক SMS পাঠান</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <Label>প্রাপক</Label>
+              <p className="text-sm text-muted-foreground">
+                {toBanglaNumber(metrics.activeTutors)} জন সক্রিয় টিউটর
+              </p>
+            </div>
+            <div>
+              <Label>মেসেজ</Label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="আপনার মেসেজ লিখুন..."
+                className="w-full h-32 p-3 rounded-md border border-input bg-background resize-none"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                {message.length} অক্ষর
+              </p>
+            </div>
+            <Button 
+              onClick={handleSendBulkSMS} 
+              className="w-full"
+              disabled={!message.trim() || sending}
+            >
+              {sending ? 'পাঠানো হচ্ছে...' : 'পাঠান'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

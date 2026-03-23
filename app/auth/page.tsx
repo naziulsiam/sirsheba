@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,6 +17,7 @@ export default function AuthPage() {
   const [pin, setPin] = useState(['', '', '', ''])
   const [confirmPin, setConfirmPin] = useState(['', '', '', ''])
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const [rememberDevice, setRememberDevice] = useState(true)
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
   const pinRefs = useRef<(HTMLInputElement | null)[]>([])
@@ -24,43 +25,46 @@ export default function AuthPage() {
   // Check if already authenticated
   useEffect(() => {
     if (isAuthenticated()) {
-      const user = session?.user
-      if (user?.role === 'admin') {
-        router.push('/admin')
-      } else {
-        router.push('/')
-      }
+      redirectBasedOnRole()
     }
-  }, [isAuthenticated, session, router])
+  }, [isAuthenticated])
 
-  // Check if user needs PIN setup
+  // Handle post-login flow
   useEffect(() => {
     if (session?.user) {
       if (!session.user.pin) {
         setStep('pin-setup')
-      } else if (!session.user.biometricEnabled && window.PublicKeyCredential) {
-        setStep('biometric')
       } else {
-        const user = session.user
-        if (user.role === 'admin') {
-          router.push('/admin')
-        } else {
-          router.push('/')
-        }
+        setStep('pin-verify')
       }
+    }
+  }, [session])
+
+  const redirectBasedOnRole = useCallback(() => {
+    const user = session?.user
+    if (user?.role === 'admin') {
+      router.push('/admin')
+    } else {
+      router.push('/')
     }
   }, [session, router])
 
-  const handlePhoneSubmit = (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (phone.length >= 11) {
-      setStep('otp')
-      setError('')
-      // Auto-focus first OTP input
-      setTimeout(() => otpRefs.current[0]?.focus(), 100)
-    } else {
-      setError('সঠিক মোবাইল নম্বর দিন')
+    setError('')
+    
+    if (phone.length < 11) {
+      setError('সঠিক মোবাইল নম্বর দিন (১১ ডিজিট)')
+      return
     }
+    
+    setLoading(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    setLoading(false)
+    setStep('otp')
+    // Auto-focus first OTP input
+    setTimeout(() => otpRefs.current[0]?.focus(), 100)
   }
 
   const handleOtpChange = (index: number, value: string) => {
@@ -82,11 +86,19 @@ export default function AuthPage() {
     }
   }
 
-  const handleOtpSubmit = (otpString: string) => {
+  const handleOtpSubmit = async (otpString: string) => {
+    setLoading(true)
+    setError('')
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
     const success = login(phone, otpString)
+    
     if (!success) {
-      setError('ভুল OTP। আবার চেষ্টা করুন (1234)')
+      setError('ভুল OTP। ৪ ডিজিটের কোড দিন।')
       setOtp(['', '', '', ''])
+      setLoading(false)
       otpRefs.current[0]?.focus()
     }
   }
@@ -118,8 +130,10 @@ export default function AuthPage() {
     }
   }
 
-  const handlePinSetupSubmit = (e: React.FormEvent) => {
+  const handlePinSetupSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+    
     const pinString = pin.join('')
     const confirmString = confirmPin.join('')
 
@@ -135,20 +149,32 @@ export default function AuthPage() {
       return
     }
 
+    setLoading(true)
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
     setupPin(pinString)
+    setLoading(false)
+    
+    // Check if biometric is available
+    if (window.PublicKeyCredential) {
+      setStep('biometric')
+    } else {
+      redirectBasedOnRole()
+    }
   }
 
-  const handlePinVerifySubmit = (e: React.FormEvent) => {
+  const handlePinVerifySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
+    
     const pinString = pin.join('')
     
+    setLoading(true)
+    await new Promise(resolve => setTimeout(resolve, 500))
+    setLoading(false)
+    
     if (verifyPin(pinString)) {
-      const user = session?.user
-      if (user?.role === 'admin') {
-        router.push('/admin')
-      } else {
-        router.push('/')
-      }
+      redirectBasedOnRole()
     } else {
       setError('ভুল PIN')
       setPin(['', '', '', ''])
@@ -156,23 +182,27 @@ export default function AuthPage() {
     }
   }
 
-  const handleEnableBiometric = () => {
+  const handleEnableBiometric = async () => {
+    setLoading(true)
+    await new Promise(resolve => setTimeout(resolve, 800))
     enableBiometric()
-    const user = session?.user
-    if (user?.role === 'admin') {
-      router.push('/admin')
-    } else {
-      router.push('/')
-    }
+    setLoading(false)
+    redirectBasedOnRole()
   }
 
   const skipBiometric = () => {
-    const user = session?.user
-    if (user?.role === 'admin') {
-      router.push('/admin')
-    } else {
-      router.push('/')
-    }
+    redirectBasedOnRole()
+  }
+
+  const resendOtp = async () => {
+    setLoading(true)
+    setError('')
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    setLoading(false)
+    setOtp(['', '', '', ''])
+    otpRefs.current[0]?.focus()
+    // Show success message
+    alert('OTP আবার পাঠানো হয়েছে')
   }
 
   // Phone Input Step
@@ -204,6 +234,7 @@ export default function AuthPage() {
                     className="pl-10 h-12 text-lg"
                     maxLength={11}
                     autoFocus
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -212,8 +243,12 @@ export default function AuthPage() {
                 <p className="text-sm text-destructive text-center">{error}</p>
               )}
 
-              <Button type="submit" className="w-full h-12 text-lg" disabled={phone.length < 11}>
-                OTP পাঠান
+              <Button 
+                type="submit" 
+                className="w-full h-12 text-lg" 
+                disabled={phone.length < 11 || loading}
+              >
+                {loading ? 'পাঠানো হচ্ছে...' : 'OTP পাঠান'}
               </Button>
             </div>
           </form>
@@ -235,7 +270,8 @@ export default function AuthPage() {
         <Card className="w-full max-w-md p-6">
           <button 
             onClick={() => setStep('phone')}
-            className="flex items-center text-muted-foreground mb-4"
+            className="flex items-center text-muted-foreground mb-4 hover:text-foreground"
+            disabled={loading}
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             ফিরে যান
@@ -263,6 +299,7 @@ export default function AuthPage() {
                 onKeyDown={(e) => handleOtpKeyDown(i, e)}
                 className="w-14 h-14 text-center text-2xl font-bold"
                 maxLength={1}
+                disabled={loading}
               />
             ))}
           </div>
@@ -271,9 +308,13 @@ export default function AuthPage() {
             <p className="text-sm text-destructive text-center mb-4">{error}</p>
           )}
 
-          <div className="text-center">
-            <button className="text-sm text-primary hover:underline">
-              OTP আবার পাঠান
+          <div className="text-center space-y-3">
+            <button 
+              onClick={resendOtp}
+              className="text-sm text-primary hover:underline disabled:opacity-50"
+              disabled={loading}
+            >
+              {loading ? 'অপেক্ষা করুন...' : 'OTP আবার পাঠান'}
             </button>
           </div>
 
@@ -327,6 +368,7 @@ export default function AuthPage() {
                       onKeyDown={(e) => handlePinKeyDown(i, e)}
                       className="w-14 h-14 text-center text-2xl font-bold"
                       maxLength={1}
+                      disabled={loading}
                     />
                   ))}
                 </div>
@@ -346,6 +388,7 @@ export default function AuthPage() {
                       onChange={(e) => handlePinChange(i, e.target.value, true)}
                       className="w-14 h-14 text-center text-2xl font-bold"
                       maxLength={1}
+                      disabled={loading}
                     />
                   ))}
                 </div>
@@ -355,9 +398,76 @@ export default function AuthPage() {
                 <p className="text-sm text-destructive text-center">{error}</p>
               )}
 
-              <Button type="submit" className="w-full h-12">
-                সংরক্ষণ করুন
+              <Button 
+                type="submit" 
+                className="w-full h-12"
+                disabled={loading || pin.join('').length !== 4 || confirmPin.join('').length !== 4}
+              >
+                {loading ? 'সংরক্ষণ হচ্ছে...' : 'সংরক্ষণ করুন'}
               </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
+    )
+  }
+
+  // PIN Verify Step
+  if (step === 'pin-verify') {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-primary/10 to-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-6">
+          <div className="text-center mb-6">
+            <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4">
+              <KeyRound className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold">PIN দিন</h2>
+            <p className="text-muted-foreground text-sm">
+              আপনার ৪ ডিজিটের PIN দিয়ে লগইন করুন
+            </p>
+          </div>
+
+          <form onSubmit={handlePinVerifySubmit}>
+            <div className="space-y-6">
+              <div className="flex justify-center gap-3">
+                {pin.map((digit, i) => (
+                  <Input
+                    key={i}
+                    ref={el => { pinRefs.current[i] = el }}
+                    type="password"
+                    inputMode="numeric"
+                    value={digit}
+                    onChange={(e) => handlePinChange(i, e.target.value)}
+                    onKeyDown={(e) => handlePinKeyDown(i, e)}
+                    className="w-14 h-14 text-center text-2xl font-bold"
+                    maxLength={1}
+                    disabled={loading}
+                  />
+                ))}
+              </div>
+
+              {error && (
+                <p className="text-sm text-destructive text-center">{error}</p>
+              )}
+
+              <Button 
+                type="submit" 
+                className="w-full h-12"
+                disabled={loading || pin.join('').length !== 4}
+              >
+                {loading ? 'যাচাই হচ্ছে...' : 'লগইন'}
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPin(['', '', '', ''])
+                  setStep('phone')
+                }}
+                className="w-full text-sm text-muted-foreground hover:text-foreground"
+              >
+                অন্য নম্বর দিয়ে লগইন
+              </button>
             </div>
           </form>
         </Card>
@@ -384,15 +494,17 @@ export default function AuthPage() {
             <Button 
               onClick={handleEnableBiometric}
               className="w-full h-12"
+              disabled={loading}
             >
               <Fingerprint className="w-5 h-5 mr-2" />
-              সক্রিয় করুন
+              {loading ? 'সক্রিয় হচ্ছে...' : 'সক্রিয় করুন'}
             </Button>
             
             <Button 
               variant="ghost" 
               onClick={skipBiometric}
               className="w-full"
+              disabled={loading}
             >
               এড়িয়ে যান
             </Button>

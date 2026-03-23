@@ -3,41 +3,11 @@
 import { useLocalStorage, generateId } from './use-local-storage'
 import type { Student, Batch, FeePayment, Attendance, Exam, ExamResult, SMSLog, TutorSettings, ReminderSettings, AuthUser, AuthSession, AdminTutor, AdminMetrics, RevenueData, FailedPayment, Invoice, PromoCode, SystemAlert } from '@/lib/types'
 
-// Sample data for demo
-const SAMPLE_BATCHES: Batch[] = [
-  { id: 'batch-1', name: 'HSC Science 2026 (সোম-বুধ)', schedule: 'সোমবার, বুধবার - সন্ধ্যা ৬টা', subject: 'পদার্থবিদ্যা' },
-  { id: 'batch-2', name: 'HSC Science 2026 (মঙ্গল-বৃহঃ)', schedule: 'মঙ্গলবার, বৃহস্পতিবার - সন্ধ্যা ৬টা', subject: 'পদার্থবিদ্যা' },
-  { id: 'batch-3', name: 'HSC Science 2027', schedule: 'শুক্রবার - সকাল ১০টা', subject: 'পদার্থবিদ্যা' },
-]
-
-const SAMPLE_STUDENTS: Student[] = [
-  { id: 'std-1', nameBn: 'রাকিব হাসান', nameEn: 'Rakib Hasan', fatherPhone: '01712345678', motherPhone: '01812345678', batchId: 'batch-1', monthlyFee: 4000, joinDate: '2025-01-15', active: true },
-  { id: 'std-2', nameBn: 'ফাতেমা আক্তার', nameEn: 'Fatema Akter', fatherPhone: '01912345678', motherPhone: '01612345678', batchId: 'batch-1', monthlyFee: 4000, joinDate: '2025-01-20', active: true },
-  { id: 'std-3', nameBn: 'মোহাম্মদ আরিফ', nameEn: 'Mohammad Arif', fatherPhone: '01512345678', motherPhone: '01412345678', batchId: 'batch-2', monthlyFee: 3500, joinDate: '2025-02-01', active: true },
-  { id: 'std-4', nameBn: 'নুসরাত জাহান', nameEn: 'Nusrat Jahan', fatherPhone: '01312345678', motherPhone: '01712345679', batchId: 'batch-2', monthlyFee: 3500, joinDate: '2025-02-10', active: true },
-  { id: 'std-5', nameBn: 'তানভীর আহমেদ', nameEn: 'Tanvir Ahmed', fatherPhone: '01812345679', motherPhone: '01912345679', batchId: 'batch-3', monthlyFee: 5000, joinDate: '2025-03-01', active: true },
-  { id: 'std-6', nameBn: 'রাহিম আহমেদ', nameEn: 'Rahim Ahmed', fatherPhone: '01711111111', motherPhone: '01811111111', batchId: 'batch-1', monthlyFee: 2500, joinDate: '2025-01-10', active: true },
-  { id: 'std-7', nameBn: 'করিম হোসেন', nameEn: 'Karim Hossain', fatherPhone: '01722222222', motherPhone: '01822222222', batchId: 'batch-1', monthlyFee: 2500, joinDate: '2025-01-12', active: true },
-  { id: 'std-8', nameBn: 'সালমা খাতুন', nameEn: 'Salma Khatun', fatherPhone: '01733333333', motherPhone: '01833333333', batchId: 'batch-1', monthlyFee: 2500, joinDate: '2025-01-15', active: true },
-  { id: 'std-9', nameBn: 'জামিল হাসান', nameEn: 'Jamil Hasan', fatherPhone: '01744444444', motherPhone: '01844444444', batchId: 'batch-1', monthlyFee: 2500, joinDate: '2025-01-18', active: true },
-  { id: 'std-10', nameBn: 'তাসনিম আক্তার', nameEn: 'Tasnim Akter', fatherPhone: '01755555555', motherPhone: '01855555555', batchId: 'batch-1', monthlyFee: 2500, joinDate: '2025-01-20', active: true },
-  { id: 'std-11', nameBn: 'ইমরান হোসেন', nameEn: 'Imran Hossain', fatherPhone: '01766666666', motherPhone: '01866666666', batchId: 'batch-2', monthlyFee: 3000, joinDate: '2025-02-01', active: true },
-  { id: 'std-12', nameBn: 'রিফাত জাহান', nameEn: 'Rifat Jahan', fatherPhone: '01777777777', motherPhone: '01877777777', batchId: 'batch-2', monthlyFee: 3000, joinDate: '2025-02-05', active: true },
-  { id: 'std-13', nameBn: 'সাকিব আহমেদ', nameEn: 'Sakib Ahmed', fatherPhone: '01788888888', motherPhone: '01888888888', batchId: 'batch-2', monthlyFee: 3000, joinDate: '2025-02-08', active: true },
-  { id: 'std-14', nameBn: 'মিমি আক্তার', nameEn: 'Mimi Akter', fatherPhone: '01799999999', motherPhone: '01899999999', batchId: 'batch-2', monthlyFee: 3000, joinDate: '2025-02-10', active: true },
-  { id: 'std-15', nameBn: 'সজীব হাসান', nameEn: 'Sajib Hasan', fatherPhone: '01700000000', motherPhone: '01800000000', batchId: 'batch-3', monthlyFee: 3500, joinDate: '2025-03-01', active: true },
-]
-
-const SAMPLE_FEES: FeePayment[] = [
-  { id: 'fee-1', studentId: 'std-1', amount: 4000, date: '2025-03-05', month: 3, year: 2025, type: 'cash' },
-  { id: 'fee-2', studentId: 'std-2', amount: 4000, date: '2025-03-08', month: 3, year: 2025, type: 'cash' },
-  { id: 'fee-3', studentId: 'std-3', amount: 2000, date: '2025-03-10', month: 3, year: 2025, type: 'cash', notes: 'আংশিক পরিশোধ' },
-]
-
+// Default empty states - no demo data
 const DEFAULT_SETTINGS: TutorSettings = {
-  name: 'Rahim Sir',
-  nameBn: 'রহিম স্যার',
-  phone: '01700000000',
+  name: '',
+  nameBn: '',
+  phone: '',
   language: 'bn',
   reminders: {
     feeReminderDay: 5,
@@ -56,7 +26,7 @@ const DEFAULT_REMINDERS: ReminderSettings = {
 
 // Students Store
 export function useStudents() {
-  const [students, setStudents, isHydrated] = useLocalStorage<Student[]>('sirsheba-students', SAMPLE_STUDENTS)
+  const [students, setStudents, isHydrated] = useLocalStorage<Student[]>('sirsheba-students', [])
 
   const addStudent = (student: Omit<Student, 'id'>) => {
     const newStudent = { ...student, id: generateId() }
@@ -79,7 +49,7 @@ export function useStudents() {
 
 // Batches Store
 export function useBatches() {
-  const [batches, setBatches, isHydrated] = useLocalStorage<Batch[]>('sirsheba-batches', SAMPLE_BATCHES)
+  const [batches, setBatches, isHydrated] = useLocalStorage<Batch[]>('sirsheba-batches', [])
 
   const addBatch = (batch: Omit<Batch, 'id'>) => {
     const newBatch = { ...batch, id: generateId() }
@@ -102,7 +72,7 @@ export function useBatches() {
 
 // Fee Payments Store
 export function useFeePayments() {
-  const [payments, setPayments, isHydrated] = useLocalStorage<FeePayment[]>('sirsheba-fees', SAMPLE_FEES)
+  const [payments, setPayments, isHydrated] = useLocalStorage<FeePayment[]>('sirsheba-fees', [])
 
   const addPayment = (payment: Omit<FeePayment, 'id'>) => {
     const newPayment = { ...payment, id: generateId() }
@@ -137,7 +107,6 @@ export function useAttendance() {
   const [attendance, setAttendance, isHydrated] = useLocalStorage<Attendance[]>('sirsheba-attendance', [])
 
   const markAttendance = (record: Omit<Attendance, 'id'>) => {
-    // Check if attendance already exists for this student on this date
     const existing = attendance.find(a => a.studentId === record.studentId && a.date === record.date)
     if (existing) {
       setAttendance(prev => prev.map(a => 
@@ -192,7 +161,6 @@ export function useExamResults() {
   const [results, setResults, isHydrated] = useLocalStorage<ExamResult[]>('sirsheba-results', [])
 
   const addResult = (result: Omit<ExamResult, 'id'>) => {
-    // Check if result already exists
     const existing = results.find(r => r.examId === result.examId && r.studentId === result.studentId)
     if (existing) {
       setResults(prev => prev.map(r => 
@@ -251,57 +219,23 @@ export function useSettings() {
   return { settings, updateSettings, updateReminders, isHydrated }
 }
 
-// Sample Admin Data
-const SAMPLE_ADMIN_TUTORS: AdminTutor[] = [
-  { id: 'tutor-1', name: 'Rahim Ahmed', phone: '01711111111', plan: 'pro', planExpiry: '2025-12-31', studentCount: 45, monthlyFee: 999, lastActive: new Date().toISOString(), status: 'active', revenue: 45000, smsSent: 1200, joinedAt: '2024-01-15' },
-  { id: 'tutor-2', name: 'Karim Hossain', phone: '01722222222', plan: 'basic', planExpiry: '2025-06-30', studentCount: 25, monthlyFee: 499, lastActive: new Date(Date.now() - 86400000).toISOString(), status: 'active', revenue: 12500, smsSent: 450, joinedAt: '2024-03-10' },
-  { id: 'tutor-3', name: 'Salma Khatun', phone: '01733333333', plan: 'pro', planExpiry: '2025-09-15', studentCount: 60, monthlyFee: 999, lastActive: new Date(Date.now() - 172800000).toISOString(), status: 'active', revenue: 60000, smsSent: 2100, joinedAt: '2024-02-01' },
-  { id: 'tutor-4', name: 'Jamil Hasan', phone: '01744444444', plan: 'free', planExpiry: '2025-04-01', studentCount: 12, monthlyFee: 0, lastActive: new Date(Date.now() - 604800000).toISOString(), status: 'inactive', revenue: 0, smsSent: 80, joinedAt: '2024-05-20' },
-  { id: 'tutor-5', name: 'Tasnim Akter', phone: '01755555555', plan: 'basic', planExpiry: '2025-05-15', studentCount: 30, monthlyFee: 499, lastActive: new Date().toISOString(), status: 'suspended', revenue: 15000, smsSent: 600, joinedAt: '2024-04-08' },
-]
-
-const SAMPLE_REVENUE_DATA: RevenueData[] = [
-  { month: 'Oct', revenue: 125000, newTutors: 12 },
-  { month: 'Nov', revenue: 142000, newTutors: 15 },
-  { month: 'Dec', revenue: 158000, newTutors: 18 },
-  { month: 'Jan', revenue: 175000, newTutors: 22 },
-  { month: 'Feb', revenue: 189000, newTutors: 19 },
-  { month: 'Mar', revenue: 210000, newTutors: 25 },
-]
-
-const SAMPLE_FAILED_PAYMENTS: FailedPayment[] = [
-  { id: 'fp-1', tutorId: 'tutor-2', tutorName: 'Karim Hossain', amount: 499, date: '2025-03-15', reason: 'Insufficient funds', retryCount: 2 },
-  { id: 'fp-2', tutorId: 'tutor-5', tutorName: 'Tasnim Akter', amount: 499, date: '2025-03-14', reason: 'Card expired', retryCount: 1 },
-]
-
-const SAMPLE_INVOICES: Invoice[] = [
-  { id: 'inv-1', tutorId: 'tutor-1', tutorName: 'Rahim Ahmed', amount: 999, status: 'paid', createdAt: '2025-03-01', paidAt: '2025-03-01' },
-  { id: 'inv-2', tutorId: 'tutor-2', tutorName: 'Karim Hossain', amount: 499, status: 'failed', createdAt: '2025-03-01' },
-  { id: 'inv-3', tutorId: 'tutor-3', tutorName: 'Salma Khatun', amount: 999, status: 'paid', createdAt: '2025-03-01', paidAt: '2025-03-02' },
-]
-
-const SAMPLE_PROMO_CODES: PromoCode[] = [
-  { id: 'promo-1', code: 'WELCOME50', discount: 50, validUntil: '2025-06-30', usageLimit: 100, usageCount: 45 },
-  { id: 'promo-2', code: 'PRO20', discount: 20, validUntil: '2025-12-31', usageLimit: 200, usageCount: 78 },
-]
-
-const SAMPLE_ALERTS: SystemAlert[] = [
-  { id: 'alert-1', type: 'warning', message: 'Payment failure rate above 5%', createdAt: new Date(Date.now() - 3600000).toISOString(), read: false },
-  { id: 'alert-2', type: 'info', message: 'New tutor signups up 25% this week', createdAt: new Date(Date.now() - 86400000).toISOString(), read: true },
-  { id: 'alert-3', type: 'error', message: 'SMS gateway connection timeout', createdAt: new Date(Date.now() - 7200000).toISOString(), read: false },
-]
-
 // Auth Store
 export function useAuth() {
   const [session, setSession, isHydrated] = useLocalStorage<AuthSession | null>('sirsheba-auth', null)
 
+  const sendOTP = async (phone: string): Promise<boolean> => {
+    // In production: call API to send OTP
+    console.log(`Sending OTP to ${phone}`)
+    return true
+  }
+
   const login = (phone: string, otp: string): boolean => {
-    // Mock OTP verification - in production this would verify against a backend
-    if (otp === '1234' || otp === '0000') {
+    // For demo: accept any 4-digit OTP
+    if (otp.length === 4 && /^\d{4}$/.test(otp)) {
       const user: AuthUser = {
         id: generateId(),
         phone,
-        name: phone === '01700000000' ? 'Admin' : 'Tutor',
+        name: phone === '01700000000' ? 'Admin User' : 'Tutor User',
         role: phone === '01700000000' ? 'admin' : 'tutor',
         createdAt: new Date().toISOString(),
       }
@@ -317,7 +251,7 @@ export function useAuth() {
   }
 
   const setupPin = (pin: string) => {
-    if (session) {
+    if (session && pin.length === 4) {
       setSession({
         ...session,
         user: { ...session.user, pin }
@@ -347,15 +281,17 @@ export function useAuth() {
     return new Date(session.expiresAt) > new Date()
   }
 
-  return { session, login, logout, setupPin, verifyPin, enableBiometric, isAuthenticated, isHydrated }
+  return { session, sendOTP, login, logout, setupPin, verifyPin, enableBiometric, isAuthenticated, isHydrated }
 }
 
-// Admin Store
+// Admin Store - no demo data
 export function useAdmin() {
-  const [tutors, setTutors, isHydratedTutors] = useLocalStorage<AdminTutor[]>('sirsheba-admin-tutors', SAMPLE_ADMIN_TUTORS)
-  const [invoices, setInvoices, isHydratedInvoices] = useLocalStorage<Invoice[]>('sirsheba-admin-invoices', SAMPLE_INVOICES)
-  const [promoCodes, setPromoCodes, isHydratedPromos] = useLocalStorage<PromoCode[]>('sirsheba-admin-promos', SAMPLE_PROMO_CODES)
-  const [alerts, setAlerts, isHydratedAlerts] = useLocalStorage<SystemAlert[]>('sirsheba-admin-alerts', SAMPLE_ALERTS)
+  const [tutors, setTutors, isHydratedTutors] = useLocalStorage<AdminTutor[]>('sirsheba-admin-tutors', [])
+  const [invoices, setInvoices, isHydratedInvoices] = useLocalStorage<Invoice[]>('sirsheba-admin-invoices', [])
+  const [promoCodes, setPromoCodes, isHydratedPromos] = useLocalStorage<PromoCode[]>('sirsheba-admin-promos', [])
+  const [alerts, setAlerts, isHydratedAlerts] = useLocalStorage<SystemAlert[]>('sirsheba-admin-alerts', [])
+  const [revenueData, setRevenueData] = useLocalStorage<RevenueData[]>('sirsheba-admin-revenue', [])
+  const [failedPayments, setFailedPayments] = useLocalStorage<FailedPayment[]>('sirsheba-admin-failed-payments', [])
 
   const isHydrated = isHydratedTutors && isHydratedInvoices && isHydratedPromos && isHydratedAlerts
 
@@ -371,12 +307,36 @@ export function useAdmin() {
     return { activeTutors, mrr, smsSent, churnRate }
   }
 
-  const getRevenueData = (): RevenueData[] => SAMPLE_REVENUE_DATA
+  const getRevenueData = (): RevenueData[] => revenueData
 
-  const getFailedPayments = (): FailedPayment[] => SAMPLE_FAILED_PAYMENTS
+  const getFailedPayments = (): FailedPayment[] => failedPayments
+
+  const addTutor = (tutor: Omit<AdminTutor, 'id'>) => {
+    const newTutor = { ...tutor, id: generateId() }
+    setTutors(prev => [...prev, newTutor])
+    return newTutor
+  }
+
+  const updateTutor = (id: string, updates: Partial<AdminTutor>) => {
+    setTutors(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t))
+  }
 
   const updateTutorStatus = (id: string, status: AdminTutor['status']) => {
     setTutors(prev => prev.map(t => t.id === id ? { ...t, status } : t))
+  }
+
+  const deleteTutor = (id: string) => {
+    setTutors(prev => prev.filter(t => t.id !== id))
+  }
+
+  const addInvoice = (invoice: Omit<Invoice, 'id'>) => {
+    const newInvoice = { ...invoice, id: generateId() }
+    setInvoices(prev => [...prev, newInvoice])
+    return newInvoice
+  }
+
+  const updateInvoice = (id: string, updates: Partial<Invoice>) => {
+    setInvoices(prev => prev.map(i => i.id === id ? { ...i, ...updates } : i))
   }
 
   const addPromoCode = (code: Omit<PromoCode, 'id' | 'usageCount'>) => {
@@ -385,12 +345,47 @@ export function useAdmin() {
     return newCode
   }
 
+  const updatePromoCode = (id: string, updates: Partial<PromoCode>) => {
+    setPromoCodes(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
+  }
+
+  const deletePromoCode = (id: string) => {
+    setPromoCodes(prev => prev.filter(p => p.id !== id))
+  }
+
+  const addAlert = (alert: Omit<SystemAlert, 'id'>) => {
+    const newAlert = { ...alert, id: generateId() }
+    setAlerts(prev => [newAlert, ...prev])
+    return newAlert
+  }
+
   const markAlertRead = (id: string) => {
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, read: true } : a))
   }
 
+  const deleteAlert = (id: string) => {
+    setAlerts(prev => prev.filter(a => a.id !== id))
+  }
+
+  const addRevenueEntry = (entry: RevenueData) => {
+    setRevenueData(prev => [...prev, entry])
+  }
+
+  const addFailedPayment = (payment: Omit<FailedPayment, 'id'>) => {
+    const newPayment = { ...payment, id: generateId() }
+    setFailedPayments(prev => [...prev, newPayment])
+    return newPayment
+  }
+
+  const updateFailedPayment = (id: string, updates: Partial<FailedPayment>) => {
+    setFailedPayments(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p))
+  }
+
+  const deleteFailedPayment = (id: string) => {
+    setFailedPayments(prev => prev.filter(p => p.id !== id))
+  }
+
   const impersonateTutor = (tutorId: string) => {
-    // In a real app, this would create a temporary session
     const tutor = tutors.find(t => t.id === tutorId)
     return tutor
   }
@@ -400,12 +395,27 @@ export function useAdmin() {
     invoices,
     promoCodes,
     alerts,
+    revenueData,
+    failedPayments,
     getMetrics,
     getRevenueData,
     getFailedPayments,
+    addTutor,
+    updateTutor,
     updateTutorStatus,
+    deleteTutor,
+    addInvoice,
+    updateInvoice,
     addPromoCode,
+    updatePromoCode,
+    deletePromoCode,
+    addAlert,
     markAlertRead,
+    deleteAlert,
+    addRevenueEntry,
+    addFailedPayment,
+    updateFailedPayment,
+    deleteFailedPayment,
     impersonateTutor,
     isHydrated
   }
