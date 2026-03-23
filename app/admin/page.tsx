@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAdmin } from '@/hooks/use-store'
@@ -33,7 +33,6 @@ import { toBanglaNumber, formatTaka } from '@/lib/types'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 export default function AdminDashboard() {
-  const router = useRouter()
   const { getMetrics, alerts, markAlertRead, tutors, revenueData } = useAdmin()
   const metrics = getMetrics()
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([])
@@ -50,10 +49,6 @@ export default function AdminDashboard() {
 
   const handleDismissAlert = (id: string) => {
     setDismissedAlerts(prev => [...prev, id])
-  }
-
-  const navigateToTutors = () => {
-    router.push('/admin/tutors')
   }
 
   return (
@@ -85,7 +80,8 @@ export default function AdminDashboard() {
       {/* Metrics Grid */}
       {tutors.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-5 cursor-pointer hover:shadow-md transition-shadow" onClick={navigateToTutors}>
+          <Link href="/admin/tutors">
+            <Card className="p-5 cursor-pointer hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">সক্রিয় টিউটর</p>
@@ -100,7 +96,8 @@ export default function AdminDashboard() {
                 <Users className="w-5 h-5 text-primary" />
               </div>
             </div>
-          </Card>
+            </Card>
+          </Link>
 
           <Card className="p-5">
             <div className="flex items-start justify-between">
@@ -303,14 +300,16 @@ export default function AdminDashboard() {
         <Card className="p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold">সাম্প্রতিক কার্যকলাপ</h3>
-            <Button variant="ghost" size="sm" onClick={navigateToTutors}>সব দেখুন</Button>
+            <Link href="/admin/tutors">
+              <Button variant="ghost" size="sm">সব দেখুন</Button>
+            </Link>
           </div>
           <div className="space-y-3">
             {tutors.slice(0, 5).map((tutor) => (
-              <div 
-                key={tutor.id} 
-                className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => router.push(`/admin/tutors/${tutor.id}`)}
+              <Link
+                key={tutor.id}
+                href={`/admin/tutors/${tutor.id}`}
+                className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <Avatar className="w-10 h-10">
                   <AvatarFallback className="bg-primary/10 text-primary text-sm font-bold">
@@ -334,7 +333,7 @@ export default function AdminDashboard() {
                    tutor.status === 'suspended' ? 'সাসপেন্ড' :
                    'নিষ্ক্রিয়'}
                 </div>
-              </div>
+              </Link>
             ))}
             {tutors.length === 0 && (
               <p className="text-center text-muted-foreground py-4">কোনো টিউটর নেই</p>

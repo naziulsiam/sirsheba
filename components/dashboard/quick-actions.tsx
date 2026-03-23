@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Plus, ClipboardList, Bell, FileText } from 'lucide-react'
 import { useTranslation } from '@/hooks/use-translation'
@@ -36,11 +35,6 @@ const actions: { href: string; icon: React.ElementType; key: TranslationKey; col
 
 export function QuickActions() {
   const { t } = useTranslation()
-  const router = useRouter()
-
-  const handleClick = (href: string) => {
-    router.push(href)
-  }
 
   return (
     <Card className="p-4">
@@ -51,10 +45,10 @@ export function QuickActions() {
         {actions.map((action) => {
           const Icon = action.icon
           return (
-            <button
+            <Link
               key={action.href}
-              onClick={() => handleClick(action.href)}
-              className="flex flex-col items-center gap-2 rounded-lg p-2 transition-transform active:scale-95 hover:bg-muted/50 cursor-pointer"
+              href={action.href}
+              className="flex flex-col items-center gap-2 rounded-lg p-2 transition-transform active:scale-95 hover:bg-muted/50"
             >
               <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${action.color}`}>
                 <Icon className="h-6 w-6" />
@@ -62,7 +56,7 @@ export function QuickActions() {
               <span className="text-center text-[10px] font-medium text-muted-foreground leading-tight">
                 {t(action.key)}
               </span>
-            </button>
+            </Link>
           )
         })}
       </div>
