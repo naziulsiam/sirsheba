@@ -128,7 +128,22 @@ export default function SubscriptionPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Checking subscription...</p>
+                </div>
+            </div>
+        )
+    }
+    
+    // If subscription is active/trial, don't render anything (redirect happens in useEffect)
+    if (subscription?.status === 'active' || subscription?.status === 'trial') {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Redirecting to dashboard...</p>
+                </div>
             </div>
         )
     }

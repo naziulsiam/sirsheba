@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Mail, Phone, ArrowRight } from 'lucide-react'
+import { Mail, Phone, ArrowRight, Trash2 } from 'lucide-react'
 
 export default function LoginPage() {
     const router = useRouter()
@@ -62,6 +62,31 @@ export default function LoginPage() {
                     অ্যাকাউন্ট নেই?{' '}
                     <Link href="/register" className="text-primary font-medium">নিবন্ধন করুন</Link>
                 </p>
+            </div>
+
+            {/* DEV ONLY: Clear all app data */}
+            <div className="mt-6 pt-4 border-t border-dashed">
+                <button
+                    onClick={() => {
+                        if (confirm('সব ডেটা মুছে ফেলবেন? (কুকি, লোকালস্টোরেজ)')) {
+                            // Clear all cookies
+                            document.cookie.split(';').forEach(cookie => {
+                                const [name] = cookie.split('=')
+                                document.cookie = `${name.trim()}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+                            })
+                            // Clear localStorage
+                            localStorage.clear()
+                            // Clear sessionStorage
+                            sessionStorage.clear()
+                            // Reload page
+                            window.location.reload()
+                        }
+                    }}
+                    className="flex items-center justify-center gap-2 w-full text-xs text-destructive hover:text-destructive/80 transition-colors"
+                >
+                    <Trash2 className="w-3 h-3" />
+                    Clear App Data (Dev Only)
+                </button>
             </div>
         </Card>
     )
