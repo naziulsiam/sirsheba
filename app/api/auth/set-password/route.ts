@@ -36,10 +36,12 @@ export async function POST(req: NextRequest) {
             sub: tutor.id,
             email: tutor.email,
             name: tutor.full_name,
+            role: tutor.role || 'tutor',
+            subscription: tutor.subscription_status || 'inactive'
         })
         await setSessionCookie(token)
 
-        return NextResponse.json({ success: true, user: { id: tutor.id, name: tutor.full_name, email: tutor.email } })
+        return NextResponse.json({ success: true, user: { id: tutor.id, name: tutor.full_name, email: tutor.email, phone: tutor.phone, role: tutor.role || 'tutor' } })
     } catch (err) {
         console.error('Set password error:', err)
         return NextResponse.json({ error: 'সার্ভার ত্রুটি' }, { status: 500 })

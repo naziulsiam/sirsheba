@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAdmin } from '@/hooks/use-store'
@@ -33,9 +34,14 @@ import { toBanglaNumber, formatTaka } from '@/lib/types'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 export default function AdminDashboard() {
+  const router = useRouter()
   const { getMetrics, alerts, markAlertRead, tutors, revenueData } = useAdmin()
   const metrics = getMetrics()
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([])
+
+  const navigateToTutors = () => {
+    router.push('/admin/tutors')
+  }
 
   const unreadAlerts = alerts.filter(a => !a.read && !dismissedAlerts.includes(a.id))
 

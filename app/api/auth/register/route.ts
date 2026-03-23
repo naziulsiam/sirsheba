@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
             email_otp: otp,
             email_otp_expires_at: expires,
             plan_type: 'free',
+            role: 'tutor',
             is_active: true,
         })
 
