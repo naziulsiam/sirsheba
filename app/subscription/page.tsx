@@ -1,17 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Check, Crown, Sparkles, Loader2, Gift, Clock, Zap } from 'lucide-react'
-
-interface SubscriptionStatus {
-    status: 'active' | 'inactive' | 'trial' | 'expired'
-    expiryDate?: string
-    daysRemaining?: number
-    plan: string
-}
 
 const plans = [
     {
@@ -61,40 +53,7 @@ const plans = [
 ]
 
 export default function SubscriptionPage() {
-    const router = useRouter()
-    const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null)
-    const [loading, setLoading] = useState(true)
     const [processing, setProcessing] = useState<string | null>(null)
-
-    useEffect(() => {
-        async function checkSubscription() {
-            try {
-                const res = await fetch('/api/subscription/status')
-                if (res.ok) {
-                    const data = await res.json()
-                    
-                    // If already has active subscription, redirect immediately (don't set state)
-                    if (data.status === 'active' || data.status === 'trial') {
-                        window.location.href = '/' // Hard navigation to ensure redirect works
-                        return
-                    }
-                    
-                    // Only set state if NOT redirecting
-                    setSubscription(data)
-                } else if (res.status === 401) {
-                    // Not authenticated, redirect to login
-                    window.location.href = '/login'
-                    return
-                }
-            } catch (err) {
-                console.error('Failed to check subscription:', err)
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        checkSubscription()
-    }, [])
 
     const handleSubscribe = async (planId: string) => {
         setProcessing(planId)
@@ -127,29 +86,6 @@ export default function SubscriptionPage() {
         setProcessing(null)
     }
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">Checking subscription...</p>
-                </div>
-            </div>
-        )
-    }
-    
-    // If subscription is active/trial, don't render anything (redirect happens in useEffect)
-    if (subscription?.status === 'active' || subscription?.status === 'trial') {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="flex flex-col items-center gap-3">
-                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">Redirecting to dashboard...</p>
-                </div>
-            </div>
-        )
-    }
-
     return (
         <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background py-12 px-4">
             <div className="max-w-6xl mx-auto">
@@ -165,41 +101,39 @@ export default function SubscriptionPage() {
                 </div>
 
                 {/* Trial Banner - Prominent */}
-                {subscription?.status !== 'trial' && subscription?.status !== 'active' && (
-                    <Card className="p-8 mb-10 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-amber-200">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                                    <Gift className="w-8 h-8 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-amber-800">৩০ দিনের ফ্রি ট্রাইয়াল</h3>
-                                    <p className="text-sm text-muted-foreground">
-                                        সব প্রো ফিচার ফ্রি ব্যবহার করুন • কোনো ক্রেডিট কার্ড লাগবে না
-                                    </p>
-                                </div>
+                <Card className="p-8 mb-10 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border-amber-200">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                                <Gift className="w-8 h-8 text-white" />
                             </div>
-                            <Button
-                                onClick={handleStartTrial}
-                                disabled={processing === 'trial'}
-                                size="lg"
-                                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
-                            >
-                                {processing === 'trial' ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        শুরু হচ্ছে...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Zap className="w-4 h-4 mr-2" />
-                                        ট্রাইয়াল শুরু করুন
-                                    </>
-                                )}
-                            </Button>
+                            <div>
+                                <h3 className="text-xl font-bold text-amber-800">৩০ দিনের ফ্রি ট্রাইয়াল</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    সব প্রো ফিচার ফ্রি ব্যবহার করুন • কোনো ক্রেডিট কার্ড লাগবে না
+                                </p>
+                            </div>
                         </div>
-                    </Card>
-                )}
+                        <Button
+                            onClick={handleStartTrial}
+                            disabled={processing === 'trial'}
+                            size="lg"
+                            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg"
+                        >
+                            {processing === 'trial' ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    শুরু হচ্ছে...
+                                </>
+                            ) : (
+                                <>
+                                    <Zap className="w-4 h-4 mr-2" />
+                                    ট্রাইয়াল শুরু করুন
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </Card>
 
                 {/* Plans Grid - 3 columns on large screens */}
                 <div className="grid md:grid-cols-3 gap-6">
