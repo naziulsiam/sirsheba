@@ -59,10 +59,11 @@ export async function middleware(request: NextRequest) {
         const payload = verified.payload as {
             sub: string
             role: 'admin' | 'tutor'
-            subscription?: 'active' | 'inactive' | 'trial'
+            subscription?: string
         }
 
         const userRole = payload.role
+        // Default to inactive if subscription is missing or invalid
         const subscription = payload.subscription || 'inactive'
 
         // If user has active subscription and visits /subscription, redirect to dashboard
@@ -73,7 +74,6 @@ export async function middleware(request: NextRequest) {
         // Check admin routes
         if (ADMIN_ROUTES.some(route => pathname.startsWith(route))) {
             if (userRole !== 'admin') {
-                // Tutors trying to access admin routes → redirect to tutor dashboard
                 return NextResponse.redirect(new URL('/', request.url))
             }
             return NextResponse.next()
@@ -82,13 +82,11 @@ export async function middleware(request: NextRequest) {
         // Check tutor routes - require active subscription
         if (TUTOR_ROUTES.some(route => pathname.startsWith(route))) {
             if (userRole === 'admin') {
-                // Admins can access tutor routes too
                 return NextResponse.next()
             }
 
             // Check subscription for tutors
-            if (subscription === 'inactive' && !ALLOWED_WHILE_INACTIVE.some(route => pathname.startsWith(route))) {
-                // Redirect to subscription page if no active subscription
+            if (!hasActiveSubscription(subscription) && !ALLOWED_WHILE_INACTIVE.some(route => pathname.startsWith(route))) {
                 return NextResponse.redirect(new URL('/subscription', request.url))
             }
 
@@ -96,7 +94,9 @@ export async function middleware(request: NextRequest) {
         }
 
         return NextResponse.next()
-    } catch {
+    } catch (err) {
+        // If JWT verification fails, clear cookie and redirect to login
+        console.error('Middleware error:', err)
         const loginUrl = new URL('/login', request.url)
         loginUrl.searchParams.set('from', pathname)
         const response = NextResponse.redirect(loginUrl)

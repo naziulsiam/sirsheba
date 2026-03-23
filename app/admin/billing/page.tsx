@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -49,12 +49,11 @@ export default function BillingPage() {
     addInvoice,
     revenueData,
     addRevenueEntry,
-    updateInvoice
+    updateInvoice,
+    isHydrated
   } = useAdmin()
   
-  const metrics = getMetrics()
-  const failedPayments = getFailedPayments()
-  
+  const [mounted, setMounted] = useState(false)
   const [newPromoCode, setNewPromoCode] = useState({
     code: '',
     discount: 20,
@@ -63,6 +62,25 @@ export default function BillingPage() {
   })
   const [showAddPromo, setShowAddPromo] = useState(false)
   const [retryingPayment, setRetryingPayment] = useState<string | null>(null)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  const metrics = getMetrics()
+  const failedPayments = getFailedPayments()
+  
+  // Show loading state while data is hydrating
+  if (!isHydrated || !mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full" />
+          <p className="text-sm text-muted-foreground">Loading billing...</p>
+        </div>
+      </div>
+    )
+  }
 
   const handleAddPromo = () => {
     if (newPromoCode.code && newPromoCode.validUntil) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -44,7 +44,8 @@ type TutorStatus = 'all' | 'active' | 'suspended' | 'inactive'
 type TutorPlan = 'all' | 'free' | 'basic' | 'pro'
 
 export default function TutorsPage() {
-  const { tutors, updateTutorStatus, addTutor, deleteTutor } = useAdmin()
+  const { tutors, updateTutorStatus, addTutor, deleteTutor, isHydrated } = useAdmin()
+  const [mounted, setMounted] = useState(false)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<TutorStatus>('all')
   const [planFilter, setPlanFilter] = useState<TutorPlan>('all')
@@ -58,6 +59,22 @@ export default function TutorsPage() {
     monthlyFee: 499,
   })
   const itemsPerPage = 10
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Show loading state while data is hydrating
+  if (!isHydrated || !mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full" />
+          <p className="text-sm text-muted-foreground">Loading tutors...</p>
+        </div>
+      </div>
+    )
+  }
 
   // Filter tutors
   const filteredTutors = tutors.filter(tutor => {

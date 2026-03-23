@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
@@ -38,7 +38,24 @@ import {
 export default function TutorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { tutors, updateTutorStatus, deleteTutor } = useAdmin()
+  const { tutors, updateTutorStatus, deleteTutor, isHydrated } = useAdmin()
+  const [mounted, setMounted] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  // Show loading state while data is hydrating
+  if (!isHydrated || !mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full" />
+          <p className="text-sm text-muted-foreground">Loading tutor details...</p>
+        </div>
+      </div>
+    )
+  }
   
   const tutor = tutors.find(t => t.id === id)
 

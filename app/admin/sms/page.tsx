@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useAdmin } from '@/hooks/use-store'
@@ -23,9 +23,26 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export default function AdminSMSPage() {
-  const { tutors, getMetrics } = useAdmin()
+  const { tutors, getMetrics, isHydrated } = useAdmin()
+  const [mounted, setMounted] = useState(false)
   const metrics = getMetrics()
   const [showSendDialog, setShowSendDialog] = useState(false)
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+  
+  // Show loading state while data is hydrating
+  if (!isHydrated || !mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full" />
+          <p className="text-sm text-muted-foreground">Loading SMS...</p>
+        </div>
+      </div>
+    )
+  }
   const [message, setMessage] = useState('')
   const [sending, setSending] = useState(false)
 

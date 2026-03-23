@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
@@ -35,9 +35,26 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const { getMetrics, alerts, markAlertRead, tutors, revenueData } = useAdmin()
+  const { getMetrics, alerts, markAlertRead, tutors, revenueData, isHydrated } = useAdmin()
   const metrics = getMetrics()
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Show loading state while data is hydrating
+  if (!isHydrated || !mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin w-10 h-10 border-4 border-primary border-t-transparent rounded-full" />
+          <p className="text-sm text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
   const navigateToTutors = () => {
     router.push('/admin/tutors')
