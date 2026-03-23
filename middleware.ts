@@ -21,6 +21,11 @@ const ADMIN_ROUTES = ['/admin']
 const TUTOR_ROUTES = ['/', '/students', '/fees', '/attendance', '/sms', '/exams', '/batches', '/settings']
 const ALLOWED_WHILE_INACTIVE = ['/subscription', '/api/subscription']
 
+// Check if user has active subscription (including trial)
+function hasActiveSubscription(subscription?: string): boolean {
+    return subscription === 'active' || subscription === 'trial'
+}
+
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl
 
@@ -59,6 +64,11 @@ export async function middleware(request: NextRequest) {
 
         const userRole = payload.role
         const subscription = payload.subscription || 'inactive'
+
+        // If user has active subscription and visits /subscription, redirect to dashboard
+        if (pathname === '/subscription' && hasActiveSubscription(subscription)) {
+            return NextResponse.redirect(new URL('/', request.url))
+        }
 
         // Check admin routes
         if (ADMIN_ROUTES.some(route => pathname.startsWith(route))) {

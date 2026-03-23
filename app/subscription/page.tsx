@@ -76,8 +76,13 @@ export default function SubscriptionPage() {
 
                     // If already has active subscription, redirect to dashboard
                     if (data.status === 'active' || data.status === 'trial') {
-                        router.push('/')
+                        router.replace('/')
+                        return
                     }
+                } else if (res.status === 401) {
+                    // Not authenticated, redirect to login
+                    router.replace('/login')
+                    return
                 }
             } catch (err) {
                 console.error('Failed to check subscription:', err)
